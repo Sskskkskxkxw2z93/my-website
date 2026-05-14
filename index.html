@@ -14,6 +14,7 @@
             --accent-blue: #0A84FF;
             --accent-red: #FF453A;
             --accent-green: #30D158;
+            --sidebar-width: 280px;
             --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
         }
 
@@ -25,7 +26,6 @@
             color: var(--text-main);
             height: 100vh;
             display: flex;
-            flex-direction: column; /* Default for mobile */
             overflow: hidden;
         }
 
@@ -37,16 +37,11 @@
             justify-content: center;
             align-items: center;
             background: black;
-            z-index: 9999;
+            z-index: 10000;
             padding: 20px;
         }
 
-        .auth-card {
-            width: 100%;
-            max-width: 340px;
-            text-align: center;
-        }
-
+        .auth-card { width: 100%; max-width: 340px; text-align: center; }
         .input-field {
             width: 100%;
             background: #1C1C1E;
@@ -54,84 +49,136 @@
             padding: 16px;
             border-radius: 12px;
             color: white;
-            font-size: 17px; /* Prevents iOS auto-zoom */
+            font-size: 17px;
             margin-bottom: 12px;
             outline: none;
         }
 
-        /* --- Responsive Layout --- */
+        /* --- App Layout --- */
         #app-screen {
             display: none;
             width: 100%;
             height: 100%;
-            flex-direction: column; /* Stacked for mobile */
+            flex-direction: row;
         }
 
-        /* Sidebar behaves like a Bottom Nav on Mobile */
+        /* Sidebar Sidebar Logic */
         .sidebar {
-            width: 100%;
-            height: 70px;
-            background: rgba(28, 28, 30, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--panel-border);
+            width: var(--sidebar-width);
+            height: 100%;
+            background: #000;
+            border-right: 1px solid var(--panel-border);
             display: flex;
-            flex-direction: row;
-            order: 2; /* Move to bottom */
-            padding: 0 20px;
-            align-items: center;
-            justify-content: space-around;
+            flex-direction: column;
+            padding: 20px;
+            transition: transform 0.3s ease, margin-left 0.3s ease;
+            z-index: 1000;
         }
 
-        .deck-list {
-            display: flex;
-            flex-direction: row;
-            overflow-x: auto;
-            gap: 10px;
-            padding: 10px 0;
-            flex: 1;
+        .sidebar.hidden {
+            margin-left: calc(-1 * var(--sidebar-width));
         }
+
+        .deck-list { flex: 1; overflow-y: auto; margin-top: 20px; }
 
         .deck-item {
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: #2C2C2E;
-            white-space: nowrap;
-            font-size: 14px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            font-size: 15px;
+            color: #d1d1d6;
+            transition: background 0.2s;
         }
 
+        .deck-item:hover { background: rgba(255,255,255,0.05); }
+        .deck-item.active { background: var(--accent-blue); color: white; }
+
+        /* Main View */
         .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #000;
+        }
+
+        /* Top Bar with Sidebar Toggle */
+        .top-bar {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .view-body {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            order: 1;
         }
 
-        /* Desktop Adjustments */
-        @media (min-width: 768px) {
-            body { flex-direction: row; }
-            #app-screen { flex-direction: row; }
-            .sidebar {
-                width: 280px;
-                height: 100vh;
-                flex-direction: column;
-                order: 0;
-                border-top: none;
-                border-right: 1px solid var(--panel-border);
-                justify-content: flex-start;
-                padding: 40px 20px;
-            }
-            .deck-list { flex-direction: column; overflow-x: hidden; }
-            .main-content { padding: 60px; }
+        /* --- Flashcard UI --- */
+        .flashcard-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* --- Cards & Editor --- */
-        .editor-card {
+        .card-surface {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 4/3;
+            background: #1C1C1E;
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            font-size: clamp(18px, 4vw, 26px);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            cursor: pointer;
+        }
+
+        .symbol-palette {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .sym-btn {
+            min-width: 44px;
+            height: 44px;
+            background: #2C2C2E;
+            border-radius: 8px;
+            color: white;
+            border: none;
+            font-size: 18px;
+        }
+
+        .editor-box {
             background: #1C1C1E;
             border-radius: 16px;
-            padding: 20px;
+            padding: 15px;
             margin-bottom: 15px;
         }
 
@@ -141,67 +188,43 @@
             border: none;
             color: white;
             font-size: 18px;
-            height: 80px;
+            min-height: 100px;
             resize: none;
             outline: none;
-            margin-top: 8px;
-        }
-
-        .symbol-palette {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .sym-btn {
-            min-width: 44px; /* Apple standard touch size */
-            height: 44px;
-            background: #2C2C2E;
-            border-radius: 8px;
-            color: white;
-            border: none;
-            font-size: 18px;
-        }
-
-        .card-surface {
-            width: 100%;
-            aspect-ratio: 4/3;
-            max-width: 500px;
-            background: #1C1C1E;
-            border-radius: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 30px;
-            font-size: clamp(20px, 5vw, 28px);
-            border: 1px solid var(--panel-border);
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .primary-btn {
-            width: 100%;
             background: var(--accent-blue);
             color: white;
             padding: 16px;
             border-radius: 14px;
             font-weight: 600;
             border: none;
+            width: 100%;
             cursor: pointer;
         }
 
-        .hidden { display: none !important; }
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+            }
+            .sidebar.hidden { transform: translateX(-100%); margin-left: 0; }
+        }
+
+        .hidden-element { display: none !important; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h1 style="font-size: 34px; margin-bottom: 10px;">Slate</h1>
-            <p style="color: var(--text-muted); margin-bottom: 30px;">Your library, everywhere.</p>
+            <h1 style="font-size: 34px; margin-bottom: 8px;">Slate</h1>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Universal Flashcards</p>
             <input type="email" id="email" class="input-field" placeholder="Email" spellcheck="false">
             <input type="password" id="password" class="input-field" placeholder="Password">
             <button class="primary-btn" id="auth-main-btn">Sign In</button>
@@ -210,41 +233,46 @@
     </div>
 
     <div id="app-screen">
-        <div class="sidebar">
-            <div style="display:flex; justify-content: space-between; width:100%; margin-bottom: 10px;" class="desktop-only">
-                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">DECKS</span>
-                <button id="add-deck-btn" style="background:none; color:var(--accent-blue); border:none; font-size:22px;">+</button>
+        <div id="sidebar" class="sidebar">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px;">LIBRARY</span>
+                <button id="add-deck-btn" style="background:none; border:none; color:var(--accent-blue); font-size: 24px;">+</button>
             </div>
             <div id="deck-list" class="deck-list"></div>
-            <button id="logout-btn" style="background:none; color:var(--accent-red); border:none; font-size: 13px; padding: 10px;">Sign Out</button>
+            <button id="logout-btn" style="background:none; color:var(--accent-red); border:none; padding:10px; text-align:left; font-size:14px;">Sign Out</button>
         </div>
 
         <div class="main-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
-                <h2 id="view-title" style="font-size: 24px;">Library</h2>
-                <div id="action-btns" class="hidden">
-                    <button id="go-add-btn" style="background:#2C2C2E; color:white; border:none; padding:8px 15px; border-radius:15px; font-size:13px; font-weight:600;">Add</button>
-                    <button id="go-study-btn" style="background:var(--accent-blue); color:white; border:none; padding:8px 15px; border-radius:15px; font-size:13px; font-weight:600;">Study</button>
+            <div class="top-bar">
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <h2 id="view-title" style="font-size: 18px; flex: 1;">Select a Deck</h2>
+                <div id="action-btns" class="hidden-element" style="display:flex; gap:10px;">
+                    <button id="go-add-btn" style="background:#2C2C2E; color:white; border:none; padding:6px 14px; border-radius:12px; font-size:12px; font-weight:600;">Add</button>
+                    <button id="go-study-btn" style="background:var(--accent-blue); color:white; border:none; padding:6px 14px; border-radius:12px; font-size:12px; font-weight:600;">Study</button>
                 </div>
             </div>
 
-            <div id="view-add" class="hidden">
-                <div id="palette" class="symbol-palette"></div>
-                <div class="editor-card">
-                    <textarea id="front-in" placeholder="Question / Formula"></textarea>
-                    <div style="height:1px; background:var(--panel-border); margin:15px 0;"></div>
-                    <textarea id="back-in" placeholder="Answer"></textarea>
+            <div class="view-body">
+                <div id="view-add" class="hidden-element">
+                    <div id="palette" class="symbol-palette"></div>
+                    <div class="editor-box">
+                        <textarea id="front-in" placeholder="Question or Formula..."></textarea>
+                        <div style="height:1px; background:var(--panel-border); margin:10px 0;"></div>
+                        <textarea id="back-in" placeholder="Answer..."></textarea>
+                    </div>
+                    <button class="primary-btn" id="save-card-trigger">Save Card</button>
                 </div>
-                <button class="primary-btn" id="save-card-trigger">Save to Deck</button>
-            </div>
 
-            <div id="view-study" class="hidden" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
-                <div class="card-surface" id="flashcard">
-                    <div id="card-text">Tap to flip</div>
-                </div>
-                <div id="study-ctrls" class="hidden" style="display:flex; gap:15px; margin-top:30px; width:100%; max-width:500px;">
-                    <button id="btn-wrong" style="flex:1; background:var(--accent-red); color:white; padding:15px; border-radius:15px; border:none; font-weight:600;">Again</button>
-                    <button id="btn-right" style="flex:1; background:var(--accent-green); color:white; padding:15px; border-radius:15px; border:none; font-weight:600;">Got it</button>
+                <div id="view-study" class="hidden-element flashcard-container">
+                    <div class="card-surface" id="flashcard">
+                        <div id="card-text">Tap to flip</div>
+                    </div>
+                    <div id="study-ctrls" class="hidden-element" style="display:flex; gap:15px; margin-top:30px; width:100%; max-width:500px;">
+                        <button id="btn-wrong" style="flex:1; background:var(--accent-red); color:white; padding:15px; border-radius:15px; border:none; font-weight:600;">Again</button>
+                        <button id="btn-right" style="flex:1; background:var(--accent-green); color:white; padding:15px; border-radius:15px; border:none; font-weight:600;">Got it</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -274,11 +302,17 @@
         let isFront = true;
         let isLogin = true;
 
+        // Toggle Sidebar Logic
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('sidebar-toggle').onclick = () => {
+            sidebar.classList.toggle('hidden');
+        };
+
         // Auth Logic
         document.getElementById('auth-toggle-btn').onclick = () => {
             isLogin = !isLogin;
             document.getElementById('auth-main-btn').innerText = isLogin ? "Sign In" : "Create Account";
-            document.getElementById('auth-toggle-btn').innerText = isLogin ? "Create Account" : "Back to Sign In";
+            document.getElementById('auth-toggle-btn').innerText = isLogin ? "Create Account" : "Sign In instead";
         };
 
         document.getElementById('auth-main-btn').onclick = async () => {
@@ -292,18 +326,17 @@
 
         onAuthStateChanged(auth, u => {
             if(u) {
-                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('auth-screen').classList.add('hidden-element');
                 document.getElementById('app-screen').style.display = 'flex';
                 loadDecks();
             } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('auth-screen').classList.remove('hidden-element');
                 document.getElementById('app-screen').style.display = 'none';
             }
         });
 
         document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-        // Deck Logic
         function loadDecks() {
             const q = query(collection(db, `users/${auth.currentUser.uid}/decks`), orderBy("createdAt", "desc"));
             onSnapshot(q, snap => {
@@ -324,7 +357,8 @@
         function selectDeck(id, name) {
             currentDeckId = id;
             document.getElementById('view-title').innerText = name;
-            document.getElementById('action-btns').classList.remove('hidden');
+            document.getElementById('action-btns').classList.remove('hidden-element');
+            if (window.innerWidth < 768) sidebar.classList.add('hidden'); // Close on mobile selection
             showView('view-add');
             onSnapshot(collection(db, `users/${auth.currentUser.uid}/decks/${id}/cards`), snap => {
                 deckCards = snap.docs.map(d => d.data());
@@ -332,24 +366,18 @@
         }
 
         function showView(id) {
-            ['view-add', 'view-study'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+            ['view-add', 'view-study'].forEach(v => document.getElementById(v).classList.add('hidden-element'));
+            document.getElementById(id).classList.remove('hidden-element');
         }
 
-        // Palette & Editor
         function initPalette() {
             const syms = ['π','√','∞','θ','λ','Σ','Δ','∫','≈','≠','±','→'];
-            const p = document.getElementById('palette');
-            p.innerHTML = "";
+            const p = document.getElementById('palette'); p.innerHTML = "";
             syms.forEach(s => {
                 const b = document.createElement('button');
                 b.className = "sym-btn";
                 b.innerText = s;
-                b.onclick = () => {
-                    const target = document.getElementById('front-in'); // Simplified for mobile
-                    target.value += s;
-                    target.focus();
-                };
+                b.onclick = () => { document.getElementById('front-in').value += s; };
                 p.appendChild(b);
             });
         }
@@ -359,43 +387,39 @@
             const b = document.getElementById('back-in').value;
             if(!f || !b) return;
             await addDoc(collection(db, `users/${auth.currentUser.uid}/decks/${currentDeckId}/cards`), { front: f, back: b });
-            document.getElementById('front-in').value = "";
-            document.getElementById('back-in').value = "";
+            document.getElementById('front-in').value = ""; document.getElementById('back-in').value = "";
         };
 
-        // Study Logic
         document.getElementById('go-study-btn').onclick = () => {
-            if(deckCards.length === 0) return alert("Deck is empty");
-            studyIdx = 0;
-            showView('view-study');
-            renderCard();
+            if(deckCards.length === 0) return alert("Add cards first!");
+            studyIdx = 0; showView('view-study'); renderCard();
         };
 
         document.getElementById('go-add-btn').onclick = () => showView('view-add');
 
         function renderCard() {
             if(studyIdx >= deckCards.length) {
-                document.getElementById('card-text').innerText = "All Done!";
-                document.getElementById('study-ctrls').classList.add('hidden');
+                document.getElementById('card-text').innerText = "Deck Finished!";
+                document.getElementById('study-ctrls').classList.add('hidden-element');
                 return;
             }
             isFront = true;
             document.getElementById('card-text').innerText = deckCards[studyIdx].front;
-            document.getElementById('study-ctrls').classList.add('hidden');
+            document.getElementById('study-ctrls').classList.add('hidden-element');
         }
 
         document.getElementById('flashcard').onclick = () => {
             if(!isFront || studyIdx >= deckCards.length) return;
             isFront = false;
             document.getElementById('card-text').innerText = deckCards[studyIdx].back;
-            document.getElementById('study-ctrls').classList.remove('hidden');
+            document.getElementById('study-ctrls').classList.remove('hidden-element');
         };
 
         document.getElementById('btn-wrong').onclick = () => { studyIdx++; renderCard(); };
         document.getElementById('btn-right').onclick = () => { studyIdx++; renderCard(); };
 
         document.getElementById('add-deck-btn').onclick = async () => {
-            const n = prompt("New Deck Name:");
+            const n = prompt("Deck Name:");
             if(n) await addDoc(collection(db, `users/${auth.currentUser.uid}/decks`), { name: n, createdAt: Date.now() });
         };
     </script>
