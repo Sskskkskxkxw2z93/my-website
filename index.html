@@ -1,767 +1,221 @@
-<!DOCTYPE html>
-
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8" />
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
-<title>Slate Flashcards</title>
-
-<style>
-
 :root{
-
-    --bg:#000;
-
-    --panel:#1c1c1e;
-
-    --soft:#2c2c2e;
-
-    --text:#fff;
-
-    --muted:#8e8e93;
-
-    --blue:#0a84ff;
-
-    --red:#ff453a;
-
-    --green:#30d158;
-
-    --radius:18px;
-
-    --shadow:0 20px 50px rgba(0,0,0,.6);
-
-    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
-
+    --bg: #f5f5f7;
+    --panel: rgba(255,255,255,0.75);
+    --soft: rgba(255,255,255,0.55);
+    --text: #1c1c1e;
+    --muted: #6e6e73;
+    --blue: #007aff;
+    --red: #ff3b30;
+    --green: #34c759;
+    --radius: 22px;
+    --shadow: 0 8px 30px rgba(0,0,0,0.12);
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-
 body{
-
     font-family:var(--font);
-
     background:var(--bg);
-
     color:var(--text);
-
     height:100vh;
-
     overflow:hidden;
-
 }
 
-/* AUTH (UNCHANGED VISUALLY MINIMAL) */
-
+/* AUTH */
 #auth-screen{
-
     position:fixed;inset:0;
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
-    background:#000;
-
+    background:var(--bg);
 }
-
-.auth-card{width:320px;text-align:center}
-
-.input-field{
-
-    width:100%;
-
+.auth-card{
+    width:340px;
+    padding:32px;
     background:var(--panel);
-
-    border:1px solid rgba(255,255,255,.1);
-
-    padding:14px;
-
-    border-radius:12px;
-
-    color:white;
-
-    margin:8px 0;
-
+    backdrop-filter:blur(20px);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    text-align:center;
 }
-
-.primary-btn{
-
+.input-field{
     width:100%;
-
-    background:var(--blue);
-
+    background:var(--soft);
     border:none;
-
     padding:14px;
-
     border-radius:14px;
-
+    color:var(--text);
+    margin:10px 0;
+    font-size:15px;
+}
+.primary-btn{
+    width:100%;
+    background:var(--blue);
+    border:none;
+    padding:14px;
+    border-radius:14px;
     color:white;
-
     font-weight:600;
-
-    margin-top:10px;
-
+    margin-top:14px;
+    font-size:16px;
 }
 
 /* APP LAYOUT */
-
 #app{
-
     display:none;
-
     height:100%;
-
     width:100%;
-
+    display:flex;
 }
 
-/* SIDEBAR (desktop/iPad) */
-
+/* SIDEBAR */
 .sidebar{
-
     width:280px;
-
-    background:#000;
-
-    border-right:1px solid rgba(255,255,255,.08);
-
-    padding:16px;
-
+    background:var(--panel);
+    backdrop-filter:blur(20px);
+    border-right:1px solid rgba(0,0,0,0.08);
+    padding:20px;
     display:flex;
-
     flex-direction:column;
-
+    box-shadow:var(--shadow);
 }
 
 .deck{
-
-    padding:12px;
-
-    border-radius:12px;
-
-    margin-bottom:6px;
-
+    padding:14px 16px;
+    border-radius:14px;
+    margin-bottom:8px;
     background:transparent;
-
-    color:#ccc;
-
+    color:var(--text);
     cursor:pointer;
-
+    font-size:15px;
+    transition:.2s;
+}
+.deck:hover{
+    background:rgba(0,0,0,0.05);
+}
+.deck.active{
+    background:var(--blue);
+    color:white;
 }
 
-.deck:hover{background:rgba(255,255,255,.05)}
-
-.deck.active{background:var(--blue);color:white}
-
 /* MAIN */
-
 .main{
-
     flex:1;
-
     display:flex;
-
     flex-direction:column;
-
 }
 
 /* TOP BAR */
-
 .topbar{
-
-    padding:14px;
-
+    padding:16px 20px;
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
-
-    border-bottom:1px solid rgba(255,255,255,.08);
-
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    background:var(--panel);
+    backdrop-filter:blur(20px);
 }
-
 .title{
-
-    font-size:16px;
-
+    font-size:18px;
     font-weight:600;
-
 }
-
 .btn-small{
-
     background:var(--soft);
-
     border:none;
-
-    padding:8px 12px;
-
-    border-radius:10px;
-
-    color:white;
-
+    padding:8px 14px;
+    border-radius:12px;
+    color:var(--text);
+    font-size:14px;
 }
 
 /* CENTER VIEW */
-
 .center{
-
     flex:1;
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
-    padding:20px;
-
+    padding:30px;
 }
 
-/* CARD (APPLE STYLE) */
-
+/* CARD */
 .card{
-
     width:100%;
-
-    max-width:520px;
-
-    height:320px;
-
+    max-width:540px;
+    height:340px;
     background:var(--panel);
-
-    border-radius:24px;
-
+    backdrop-filter:blur(25px);
+    border-radius:28px;
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     text-align:center;
-
-    padding:24px;
-
-    font-size:22px;
-
+    padding:28px;
+    font-size:24px;
     box-shadow:var(--shadow);
-
-    transition:.25s;
-
+    transition:.25s ease;
+    cursor:pointer;
 }
 
 /* STUDY CONTROLS */
-
 .controls{
-
     display:flex;
-
-    gap:10px;
-
-    margin-top:20px;
-
+    gap:12px;
+    margin-top:24px;
     width:100%;
-
-    max-width:520px;
-
+    max-width:540px;
 }
-
+.control-btn{
+    border:none;
+    padding:16px;
+    border-radius:16px;
+    color:white;
+    font-weight:600;
+    font-size:16px;
+}
 .good{background:var(--green);flex:1}
-
 .bad{background:var(--red);flex:1}
 
-.control-btn{
-
-    border:none;
-
-    padding:14px;
-
-    border-radius:14px;
-
-    color:white;
-
-    font-weight:600;
-
-}
-
 /* ADD VIEW */
-
 textarea{
-
     width:100%;
-
-    background:var(--panel);
-
+    background:var(--soft);
     border:none;
-
-    color:white;
-
-    padding:14px;
-
-    border-radius:14px;
-
-    margin-bottom:10px;
-
-    min-height:90px;
-
+    color:var(--text);
+    padding:16px;
+    border-radius:16px;
+    margin-bottom:12px;
+    min-height:100px;
     resize:none;
-
+    font-size:16px;
 }
 
 /* MODAL */
-
 .modal{
-
     position:fixed;
-
     inset:0;
-
-    background:rgba(0,0,0,.6);
-
+    background:rgba(0,0,0,.3);
     display:none;
-
     justify-content:center;
-
     align-items:center;
-
 }
-
 .modal-box{
-
     width:320px;
-
     background:var(--panel);
-
-    padding:20px;
-
-    border-radius:18px;
-
+    padding:24px;
+    border-radius:20px;
+    box-shadow:var(--shadow);
 }
 
 /* MOBILE */
-
 @media(max-width:768px){
-
     .sidebar{
-
         position:fixed;
-
         left:0;
-
         top:0;
-
         bottom:0;
-
         transform:translateX(-100%);
-
         transition:.3s;
-
         z-index:10;
-
     }
-
     .sidebar.open{transform:translateX(0)}
-
 }
-
-</style>
-
-</head>
-
-<body>
-
-<!-- AUTH -->
-
-<div id="auth-screen">
-
-    <div class="auth-card">
-
-        <h1>Slate</h1>
-
-        <input id="email" class="input-field" placeholder="Email">
-
-        <input id="password" class="input-field" type="password" placeholder="Password">
-
-        <button id="auth-btn" class="primary-btn">Sign In</button>
-
-        <p id="toggle" style="color:var(--blue);margin-top:10px;">Create Account</p>
-
-    </div>
-
-</div>
-
-<!-- APP -->
-
-<div id="app">
-
-    <div class="sidebar" id="sidebar">
-
-        <button id="new-deck" class="btn-small">+ New Deck</button>
-
-        <div id="deck-list"></div>
-
-        <button id="logout" class="btn-small" style="margin-top:auto;color:var(--red)">Logout</button>
-
-    </div>
-
-    <div class="main">
-
-        <div class="topbar">
-
-            <button id="menu" class="btn-small">☰</button>
-
-            <div class="title" id="deck-title">Select Deck</div>
-
-            <button id="add-mode" class="btn-small">Add</button>
-
-        </div>
-
-        <div class="center" id="view-study">
-
-            <div>
-
-                <div class="card" id="card">Select a deck</div>
-
-                <div class="controls" id="controls" style="display:none;">
-
-                    <button class="control-btn bad" id="again">Again</button>
-
-                    <button class="control-btn good" id="got">Got it</button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="center" id="view-add" style="display:none;flex-direction:column;">
-
-            <textarea id="front" placeholder="Question"></textarea>
-
-            <textarea id="back" placeholder="Answer"></textarea>
-
-            <button class="primary-btn" id="save">Save Card</button>
-
-        </div>
-
-    </div>
-
-</div>
-
-<!-- MODAL -->
-
-<div class="modal" id="modal">
-
-    <div class="modal-box">
-
-        <input id="deck-name" class="input-field" placeholder="Deck name">
-
-        <button id="create" class="primary-btn">Create</button>
-
-    </div>
-
-</div>
-
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-
-import {
-
-getAuth,
-
-signInWithEmailAndPassword,
-
-createUserWithEmailAndPassword,
-
-onAuthStateChanged,
-
-signOut
-
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
-import {
-
-getFirestore,
-
-collection,
-
-addDoc,
-
-onSnapshot,
-
-query,
-
-orderBy
-
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-/* FIREBASE (UNCHANGED) */
-
-const firebaseConfig = {
-
-apiKey: "AIzaSyDLn5hL02geNL0eMU5xXXUKkrLKA0QZhfs",
-
-authDomain: "slate-app-8fc4c.firebaseapp.com",
-
-projectId: "slate-app-8fc4c",
-
-storageBucket: "slate-app-8fc4c.firebasestorage.app",
-
-messagingSenderId: "1038552772007",
-
-appId: "1:1038552772007:web:855420f4f2181952cc9a82"
-
-};
-
-const app = initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
-
-const db = getFirestore(app);
-
-/* STATE */
-
-let decks = [];
-
-let cards = [];
-
-let currentDeck = null;
-
-let index = 0;
-
-let login = true;
-
-/* AUTH */
-
-const authBtn = document.getElementById("auth-btn");
-
-const toggle = document.getElementById("toggle");
-
-toggle.onclick = () => {
-
-login = !login;
-
-authBtn.innerText = login ? "Sign In" : "Create Account";
-
-toggle.innerText = login ? "Create Account" : "Sign In";
-
-};
-
-authBtn.onclick = async () => {
-
-const email = emailEl.value;
-
-const pass = passEl.value;
-
-if(login){
-
-await signInWithEmailAndPassword(auth,email,pass);
-
-}else{
-
-await createUserWithEmailAndPassword(auth,email,pass);
-
-}
-
-};
-
-onAuthStateChanged(auth,u=>{
-
-if(u){
-
-authScreen.style.display="none";
-
-appUI.style.display="flex";
-
-loadDecks();
-
-}else{
-
-authScreen.style.display="flex";
-
-appUI.style.display="none";
-
-}
-
-});
-
-/* ELEMENTS */
-
-const authScreen=document.getElementById("auth-screen");
-
-const appUI=document.getElementById("app");
-
-const emailEl=document.getElementById("email");
-
-const passEl=document.getElementById("password");
-
-/* DECKS */
-
-function loadDecks(){
-
-const q=query(collection(db,`users/${auth.currentUser.uid}/decks`),orderBy("createdAt","desc"));
-
-onSnapshot(q,snap=>{
-
-const list=document.getElementById("deck-list");
-
-list.innerHTML="";
-
-snap.forEach(d=>{
-
-const data=d.data();
-
-const div=document.createElement("div");
-
-div.className="deck";
-
-div.innerText=data.name;
-
-div.onclick=()=>selectDeck(d.id,data.name);
-
-list.appendChild(div);
-
-});
-
-});
-
-}
-
-function selectDeck(id,name){
-
-currentDeck=id;
-
-document.getElementById("deck-title").innerText=name;
-
-const q=query(collection(db,`users/${auth.currentUser.uid}/decks/${id}/cards`));
-
-onSnapshot(q,snap=>{
-
-cards=snap.docs.map(d=>d.data());
-
-index=0;
-
-showCard();
-
-});
-
-}
-
-/* CARD LOGIC */
-
-function showCard(){
-
-if(cards.length===0){
-
-document.getElementById("card").innerText="No cards";
-
-return;
-
-}
-
-document.getElementById("card").innerText=cards[index].front;
-
-document.getElementById("controls").style.display="none";
-
-}
-
-document.getElementById("card").onclick=()=>{
-
-document.getElementById("card").innerText=cards[index].back;
-
-document.getElementById("controls").style.display="flex";
-
-};
-
-document.getElementById("got").onclick=()=>{
-
-index++;
-
-showCard();
-
-};
-
-document.getElementById("again").onclick=()=>{
-
-index++;
-
-showCard();
-
-};
-
-/* SAVE CARD */
-
-document.getElementById("save").onclick=async()=>{
-
-const f=document.getElementById("front").value;
-
-const b=document.getElementById("back").value;
-
-await addDoc(collection(db,`users/${auth.currentUser.uid}/decks/${currentDeck}/cards`),{
-
-front:f,back:b
-
-});
-
-document.getElementById("front").value="";
-
-document.getElementById("back").value="";
-
-};
-
-/* MODAL */
-
-document.getElementById("new-deck").onclick=()=>{
-
-document.getElementById("modal").style.display="flex";
-
-};
-
-document.getElementById("create").onclick=async()=>{
-
-const name=document.getElementById("deck-name").value;
-
-await addDoc(collection(db,`users/${auth.currentUser.uid}/decks`),{
-
-name,createdAt:Date.now()
-
-});
-
-document.getElementById("modal").style.display="none";
-
-};
-
-/* MENU */
-
-document.getElementById("menu").onclick=()=>{
-
-document.getElementById("sidebar").classList.toggle("open");
-
-};
-
-/* SWITCH VIEWS */
-
-document.getElementById("add-mode").onclick=()=>{
-
-document.getElementById("view-add").style.display="flex";
-
-document.getElementById("view-study").style.display="none";
-
-};
-
-document.getElementById("logout").onclick=()=>signOut(auth);
-
-</script>
-
-</body>
-
-</html>
