@@ -1084,14 +1084,77 @@ function navigateTo(view, folderId) {
 function renderFolders() {
   const user = getUserData(currentUser.uid);
   const list = document.getElementById('folder-list');
-  const folders = Object.values(user.folders || {});
+
+  const folders = Object.values(user.folders || {})
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   list.innerHTML = folders.map(f => `
-    <div class="sidebar-item" id="folder-nav-${f.id}" onclick="navigateTo('folder', '${f.id}')">
-      <svg viewBox="0 0 16 16" fill="none" width="16" height="16"><path d="M1 4a1 1 0 011-1h4l1.5 2H14a1 1 0 011 1v7a1 1 0 01-1 1H2a1 1 0 01-1-1V4z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
-      <span class="sidebar-folder-name">${f.name}</span>
+    <div class="sidebar-item folder-draggable"
+         id="folder-nav-${f.id}"
+         draggable="true"
+         data-folder-id="${f.id}"
+         onclick="navigateTo('folder', '${f.id}')">
+
+      <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+        <path d="M1 4a1 1 0 011-1h4l1.5 2H14a1 1 0 011 1v7a1 1 0 01-1 1H2a1 1 0 01-1-1V4z"
+          stroke="currentColor" stroke-width="1.3" fill="none"/>
+      </svg>
+
+      <span class="sidebar-folder-name">${esc(f.name)}</span>
+
+      <div style="display:flex;gap:4px" onclick="event.stopPropagation()">
+        <button class="icon-btn" onclick="renameFolder('${f.id}')">✎</button>
+        <button class="icon-btn danger" onclick="deleteFolder('${f.id}')">✕</button>
+      </div>
     </div>
   `).join('');
+
+  initFolderDrag();
+}
+
+function initFolderDrag() {
+  const items = document.querySelectorAll('.folder-draggable');
+
+  let dragged = null;
+
+  items.forEach(item => {
+
+    item.addEventListener('dragstart', () => {
+      dragged = item;
+      item.style.opacity = '0.35';
+    });
+
+    item.addEventListener('dragend', () => {
+      item.style.opacity = '1';
+      dragged = null;
+
+      saveFolderOrder();
+    });
+
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+
+      if (!dragged || dragged === item) return;
+
+      const list = item.parentNode;
+
+      const draggedRect = dragged.getBoundingClientRect();
+      const targetRect = item.getBoundingClientRect();
+
+      const after = e.clientY > targetRect.top + targetRect.height / 2;
+
+      if (after) {
+        list.insertBefore(dragged, item.nextSibling);
+      } else {
+        list.insertBefore(dragged, item);
+      }
+    });
+
+  });
 }
 
 function renderDecks(filterFolder) {
@@ -1503,6 +1566,23 @@ function saveFolder() {
   closeModal('folder-modal');
   renderFolders();
   showToast('Folder created!');
+}
+
+function saveFolderOrder() {
+  const uid = currentUser.uid;
+  const db = loadDB();
+
+  const items = [...document.querySelectorAll('.folder-draggable')];
+
+  items.forEach((el, index) => {
+    const id = el.dataset.folderId;
+    if (db.users[uid].folders[id]) {
+      db.users[uid].folders[id].order = index;
+    }
+  });
+
+  saveDB(db);
+  renderFolders();
 }
 
 // ===== SYMBOLS =====
