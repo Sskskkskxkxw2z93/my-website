@@ -8,8 +8,8 @@
 <style>
 :root{
     --bg: #f5f5f7;
-    --panel: rgba(255,255,255,0.75);
-    --soft: rgba(255,255,255,0.55);
+    --panel: rgba(255,255,255,0.85);
+    --soft: rgba(255,255,255,0.65);
     --text: #1c1c1e;
     --muted: #6e6e73;
     --blue: #007aff;
@@ -46,6 +46,10 @@ body{
     box-shadow:var(--shadow);
     text-align:center;
 }
+.auth-card h1{
+    font-size:26px;
+    margin-bottom:10px;
+}
 .input-field{
     width:100%;
     background:var(--soft);
@@ -66,6 +70,7 @@ body{
     font-weight:600;
     margin-top:14px;
     font-size:16px;
+    cursor:pointer;
 }
 
 /* APP LAYOUT */
@@ -87,7 +92,18 @@ body{
     flex-direction:column;
     box-shadow:var(--shadow);
 }
-
+.sidebar-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:16px;
+    font-weight:600;
+    font-size:15px;
+}
+.sidebar-header span{
+    color:var(--muted);
+    font-size:13px;
+}
 .deck{
     padding:14px 16px;
     border-radius:14px;
@@ -97,6 +113,12 @@ body{
     cursor:pointer;
     font-size:15px;
     transition:.2s;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.deck-icon{
+    font-size:16px;
 }
 .deck:hover{
     background:rgba(0,0,0,0.05);
@@ -104,6 +126,9 @@ body{
 .deck.active{
     background:var(--blue);
     color:white;
+}
+.deck.active .deck-icon{
+    opacity:0.9;
 }
 
 /* MAIN */
@@ -115,13 +140,18 @@ body{
 
 /* TOP BAR */
 .topbar{
-    padding:16px 20px;
+    padding:12px 20px;
     display:flex;
     align-items:center;
     justify-content:space-between;
     border-bottom:1px solid rgba(0,0,0,0.08);
     background:var(--panel);
     backdrop-filter:blur(20px);
+}
+.top-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
 .title{
     font-size:18px;
@@ -134,6 +164,28 @@ body{
     border-radius:12px;
     color:var(--text);
     font-size:14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+.btn-icon{
+    font-size:16px;
+}
+
+/* PROGRESS RING */
+.progress-wrapper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.progress-label{
+    font-size:12px;
+    color:var(--muted);
+}
+.progress-ring{
+    width:32px;
+    height:32px;
 }
 
 /* CENTER VIEW */
@@ -145,23 +197,43 @@ body{
     padding:30px;
 }
 
-/* CARD */
-.card{
+/* CARD 3D FLIP */
+.card-wrapper{
+    perspective:1200px;
     width:100%;
     max-width:540px;
     height:340px;
+}
+.card{
+    width:100%;
+    height:100%;
+    position:relative;
+    transform-style:preserve-3d;
+    transition:transform .4s ease;
+    cursor:pointer;
+}
+.card-inner{
+    position:absolute;
+    inset:0;
     background:var(--panel);
     backdrop-filter:blur(25px);
     border-radius:28px;
+    box-shadow:var(--shadow);
     display:flex;
     justify-content:center;
     align-items:center;
     text-align:center;
     padding:28px;
     font-size:24px;
-    box-shadow:var(--shadow);
-    transition:.25s ease;
-    cursor:pointer;
+    backface-visibility:hidden;
+}
+.card-front{
+}
+.card-back{
+    transform:rotateY(180deg);
+}
+.card.flipped{
+    transform:rotateY(180deg);
 }
 
 /* STUDY CONTROLS */
@@ -179,11 +251,21 @@ body{
     color:white;
     font-weight:600;
     font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
 }
 .good{background:var(--green);flex:1}
 .bad{background:var(--red);flex:1}
 
 /* ADD VIEW */
+#view-add{
+    flex-direction:column;
+    max-width:540px;
+    width:100%;
+}
 textarea{
     width:100%;
     background:var(--soft);
@@ -195,6 +277,35 @@ textarea{
     min-height:100px;
     resize:none;
     font-size:16px;
+}
+
+/* BOTTOM NAV */
+.bottom-nav{
+    height:60px;
+    padding:8px 20px 16px;
+    background:var(--panel);
+    backdrop-filter:blur(20px);
+    border-top:1px solid rgba(0,0,0,0.06);
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+}
+.nav-btn{
+    border:none;
+    background:transparent;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    font-size:11px;
+    color:var(--muted);
+    cursor:pointer;
+}
+.nav-btn span{
+    font-size:18px;
+    margin-bottom:2px;
+}
+.nav-btn.active{
+    color:var(--blue);
 }
 
 /* MODAL */
@@ -236,10 +347,11 @@ textarea{
 <div id="auth-screen">
     <div class="auth-card">
         <h1>Slate</h1>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Beautiful spaced‑repetition flashcards.</p>
         <input id="email" class="input-field" placeholder="Email">
         <input id="password" class="input-field" type="password" placeholder="Password">
         <button id="auth-btn" class="primary-btn">Sign In</button>
-        <p id="toggle" style="color:var(--blue);margin-top:10px;">Create Account</p>
+        <p id="toggle" style="color:var(--blue);margin-top:10px;cursor:pointer;">Create Account</p>
     </div>
 </div>
 
@@ -247,34 +359,98 @@ textarea{
 <div id="app">
 
     <div class="sidebar" id="sidebar">
-        <button id="new-deck" class="btn-small">+ New Deck</button>
+        <div class="sidebar-header">
+            <div>Decks</div>
+            <span id="deck-count-label">0 decks</span>
+        </div>
+        <button id="new-deck" class="btn-small" style="margin-bottom:12px;">
+            <span class="btn-icon">＋</span>
+            New Deck
+        </button>
         <div id="deck-list"></div>
-        <button id="logout" class="btn-small" style="margin-top:auto;color:var(--red)">Logout</button>
+        <button id="logout" class="btn-small" style="margin-top:auto;color:var(--red)">
+            <span class="btn-icon">⎋</span>
+            Logout
+        </button>
     </div>
 
     <div class="main">
 
         <div class="topbar">
-            <button id="menu" class="btn-small">☰</button>
-            <div class="title" id="deck-title">Select Deck</div>
-            <button id="add-mode" class="btn-small">Add</button>
+            <div class="top-left">
+                <button id="menu" class="btn-small">
+                    <span class="btn-icon">☰</span>
+                </button>
+                <div class="title" id="deck-title">Select Deck</div>
+            </div>
+            <div class="progress-wrapper">
+                <div class="progress-label" id="progress-text">0 / 0</div>
+                <svg class="progress-ring" viewBox="0 0 36 36">
+                    <path
+                        id="progress-bg"
+                        d="M18 2 a 16 16 0 1 1 0 32 a 16 16 0 1 1 0 -32"
+                        fill="none"
+                        stroke="rgba(0,0,0,0.08)"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                    />
+                    <path
+                        id="progress-fg"
+                        d="M18 2 a 16 16 0 1 1 0 32 a 16 16 0 1 1 0 -32"
+                        fill="none"
+                        stroke="var(--blue)"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-dasharray="100"
+                        stroke-dashoffset="100"
+                    />
+                </svg>
+            </div>
         </div>
 
         <div class="center" id="view-study">
             <div>
-                <div class="card" id="card">Select a deck</div>
+                <div class="card-wrapper" id="card-wrapper">
+                    <div class="card" id="card">
+                        <div class="card-inner card-front" id="card-front">Select a deck</div>
+                        <div class="card-inner card-back" id="card-back">Select a deck</div>
+                    </div>
+                </div>
 
                 <div class="controls" id="controls" style="display:none;">
-                    <button class="control-btn bad" id="again">Again</button>
-                    <button class="control-btn good" id="got">Got it</button>
+                    <button class="control-btn bad" id="again">
+                        <span>↺</span>
+                        Again
+                    </button>
+                    <button class="control-btn good" id="got">
+                        <span>✓</span>
+                        Got it
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="center" id="view-add" style="display:none;flex-direction:column;">
-            <textarea id="front" placeholder="Question"></textarea>
-            <textarea id="back" placeholder="Answer"></textarea>
-            <button class="primary-btn" id="save">Save Card</button>
+        <div class="center" id="view-add" style="display:none;">
+            <div id="add-container" style="width:100%;max-width:540px;">
+                <textarea id="front" placeholder="Question"></textarea>
+                <textarea id="back" placeholder="Answer"></textarea>
+                <button class="primary-btn" id="save">Save Card</button>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-btn active" id="nav-study">
+                <span>📚</span>
+                Study
+            </button>
+            <button class="nav-btn" id="nav-add">
+                <span>✏️</span>
+                Add
+            </button>
+            <button class="nav-btn" id="nav-decks">
+                <span>📂</span>
+                Decks
+            </button>
         </div>
 
     </div>
@@ -322,138 +498,265 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 /* STATE */
-let decks = [];
 let cards = [];
 let currentDeck = null;
 let index = 0;
 let login = true;
-
-/* AUTH */
-const authBtn = document.getElementById("auth-btn");
-const toggle = document.getElementById("toggle");
-
-toggle.onclick = () => {
-login = !login;
-authBtn.innerText = login ? "Sign In" : "Create Account";
-toggle.innerText = login ? "Create Account" : "Sign In";
-};
-
-authBtn.onclick = async () => {
-const email = emailEl.value;
-const pass = passEl.value;
-if(login){
-await signInWithEmailAndPassword(auth,email,pass);
-}else{
-await createUserWithEmailAndPassword(auth,email,pass);
-}
-};
-
-onAuthStateChanged(auth,u=>{
-if(u){
-authScreen.style.display="none";
-appUI.style.display="flex";
-loadDecks();
-}else{
-authScreen.style.display="flex";
-appUI.style.display="none";
-}
-});
+let showingBack = false;
 
 /* ELEMENTS */
 const authScreen=document.getElementById("auth-screen");
 const appUI=document.getElementById("app");
 const emailEl=document.getElementById("email");
 const passEl=document.getElementById("password");
+const authBtn = document.getElementById("auth-btn");
+const toggle = document.getElementById("toggle");
+
+const deckListEl = document.getElementById("deck-list");
+const deckTitleEl = document.getElementById("deck-title");
+const deckCountLabel = document.getElementById("deck-count-label");
+
+const cardEl = document.getElementById("card");
+const cardFrontEl = document.getElementById("card-front");
+const cardBackEl = document.getElementById("card-back");
+const controlsEl = document.getElementById("controls");
+
+const progressText = document.getElementById("progress-text");
+const progressFg = document.getElementById("progress-fg");
+
+const viewStudy = document.getElementById("view-study");
+const viewAdd = document.getElementById("view-add");
+
+const navStudy = document.getElementById("nav-study");
+const navAdd = document.getElementById("nav-add");
+const navDecks = document.getElementById("nav-decks");
+
+/* AUTH TOGGLE */
+toggle.onclick = () => {
+    login = !login;
+    authBtn.innerText = login ? "Sign In" : "Create Account";
+    toggle.innerText = login ? "Create Account" : "Sign In";
+};
+
+authBtn.onclick = async () => {
+    const email = emailEl.value;
+    const pass = passEl.value;
+    if(!email || !pass) return;
+    if(login){
+        await signInWithEmailAndPassword(auth,email,pass);
+    }else{
+        await createUserWithEmailAndPassword(auth,email,pass);
+    }
+};
+
+onAuthStateChanged(auth,u=>{
+    if(u){
+        authScreen.style.display="none";
+        appUI.style.display="flex";
+        loadDecks();
+    }else{
+        authScreen.style.display="flex";
+        appUI.style.display="none";
+    }
+});
 
 /* DECKS */
 function loadDecks(){
-const q=query(collection(db,`users/${auth.currentUser.uid}/decks`),orderBy("createdAt","desc"));
-onSnapshot(q,snap=>{
-const list=document.getElementById("deck-list");
-list.innerHTML="";
-snap.forEach(d=>{
-const data=d.data();
-const div=document.createElement("div");
-div.className="deck";
-div.innerText=data.name;
-div.onclick=()=>selectDeck(d.id,data.name);
-list.appendChild(div);
-});
-});
+    const q=query(collection(db,`users/${auth.currentUser.uid}/decks`),orderBy("createdAt","desc"));
+    onSnapshot(q,snap=>{
+        deckListEl.innerHTML="";
+        let count = 0;
+        snap.forEach(d=>{
+            count++;
+            const data=d.data();
+            const div=document.createElement("div");
+            div.className="deck";
+            div.innerHTML = `<span class="deck-icon">📘</span><span>${data.name}</span>`;
+            div.onclick=()=>selectDeck(d.id,data.name,div);
+            deckListEl.appendChild(div);
+        });
+        deckCountLabel.innerText = count + (count === 1 ? " deck" : " decks");
+    });
 }
 
-function selectDeck(id,name){
-currentDeck=id;
-document.getElementById("deck-title").innerText=name;
-
-const q=query(collection(db,`users/${auth.currentUser.uid}/decks/${id}/cards`));
-onSnapshot(q,snap=>{
-cards=snap.docs.map(d=>d.data());
-index=0;
-showCard();
-});
+function clearActiveDecks(){
+    Array.from(deckListEl.children).forEach(c=>c.classList.remove("active"));
 }
 
-/* CARD LOGIC */
-function showCard(){
-if(cards.length===0){
-document.getElementById("card").innerText="No cards";
-return;
-}
-document.getElementById("card").innerText=cards[index].front;
-document.getElementById("controls").style.display="none";
+function selectDeck(id,name,el){
+    currentDeck=id;
+    deckTitleEl.innerText=name;
+    clearActiveDecks();
+    if(el) el.classList.add("active");
+
+    const q=query(collection(db,`users/${auth.currentUser.uid}/decks/${id}/cards`));
+    onSnapshot(q,snap=>{
+        cards=snap.docs.map(d=>d.data());
+        index=0;
+        showingBack=false;
+        updateCard();
+        updateProgress();
+    });
 }
 
-document.getElementById("card").onclick=()=>{
-document.getElementById("card").innerText=cards[index].back;
-document.getElementById("controls").style.display="flex";
+/* CARD + PROGRESS */
+function updateProgress(){
+    const total = cards.length || 0;
+    const current = Math.min(index, total);
+    progressText.innerText = `${current} / ${total}`;
+    const percent = total === 0 ? 0 : (current / total) * 100;
+    const dashOffset = 100 - percent;
+    progressFg.style.strokeDasharray = "100";
+    progressFg.style.strokeDashoffset = dashOffset;
+}
+
+function updateCard(){
+    if(cards.length===0){
+        cardFrontEl.innerText="No cards";
+        cardBackEl.innerText="No cards";
+        controlsEl.style.display="none";
+        cardEl.classList.remove("flipped");
+        showingBack=false;
+        updateProgress();
+        return;
+    }
+    if(index >= cards.length){
+        cardFrontEl.innerText="All done for this deck 🎉";
+        cardBackEl.innerText="Tap to restart from the beginning.";
+        controlsEl.style.display="none";
+        cardEl.classList.remove("flipped");
+        showingBack=false;
+        updateProgress();
+        return;
+    }
+    const c = cards[index];
+    cardFrontEl.innerText=c.front;
+    cardBackEl.innerText=c.back;
+    controlsEl.style.display="none";
+    cardEl.classList.remove("flipped");
+    showingBack=false;
+    updateProgress();
+}
+
+/* FLIP ON TAP */
+cardEl.onclick = ()=>{
+    if(cards.length===0) return;
+    showingBack = !showingBack;
+    if(showingBack){
+        cardEl.classList.add("flipped");
+        controlsEl.style.display="flex";
+    }else{
+        cardEl.classList.remove("flipped");
+        controlsEl.style.display="none";
+    }
 };
 
+/* GOT / AGAIN */
 document.getElementById("got").onclick=()=>{
-index++;
-showCard();
+    if(cards.length===0) return;
+    index++;
+    showingBack=false;
+    cardEl.classList.remove("flipped");
+    updateCard();
 };
 
 document.getElementById("again").onclick=()=>{
-index++;
-showCard();
+    if(cards.length===0) return;
+    index++;
+    showingBack=false;
+    cardEl.classList.remove("flipped");
+    updateCard();
 };
+
+/* SWIPE GESTURES */
+let touchStartX = null;
+let touchStartY = null;
+
+const cardWrapper = document.getElementById("card-wrapper");
+
+cardWrapper.addEventListener("touchstart", (e)=>{
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+}, {passive:true});
+
+cardWrapper.addEventListener("touchend", (e)=>{
+    if(touchStartX === null || touchStartY === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)){
+        if(dx > 0){
+            // swipe right -> got it
+            document.getElementById("got").click();
+        }else{
+            // swipe left -> again
+            document.getElementById("again").click();
+        }
+    }
+    touchStartX = null;
+    touchStartY = null;
+}, {passive:true});
 
 /* SAVE CARD */
 document.getElementById("save").onclick=async()=>{
-const f=document.getElementById("front").value;
-const b=document.getElementById("back").value;
-await addDoc(collection(db,`users/${auth.currentUser.uid}/decks/${currentDeck}/cards`),{
-front:f,back:b
-});
-document.getElementById("front").value="";
-document.getElementById("back").value="";
+    if(!currentDeck) return;
+    const f=document.getElementById("front").value.trim();
+    const b=document.getElementById("back").value.trim();
+    if(!f || !b) return;
+    await addDoc(collection(db,`users/${auth.currentUser.uid}/decks/${currentDeck}/cards`),{
+        front:f,back:b
+    });
+    document.getElementById("front").value="";
+    document.getElementById("back").value="";
 };
 
 /* MODAL */
 document.getElementById("new-deck").onclick=()=>{
-document.getElementById("modal").style.display="flex";
+    document.getElementById("modal").style.display="flex";
 };
 
 document.getElementById("create").onclick=async()=>{
-const name=document.getElementById("deck-name").value;
-await addDoc(collection(db,`users/${auth.currentUser.uid}/decks`),{
-name,createdAt:Date.now()
-});
-document.getElementById("modal").style.display="none";
+    const name=document.getElementById("deck-name").value.trim();
+    if(!name) return;
+    await addDoc(collection(db,`users/${auth.currentUser.uid}/decks`),{
+        name,createdAt:Date.now()
+    });
+    document.getElementById("deck-name").value="";
+    document.getElementById("modal").style.display="none";
 };
 
 /* MENU */
 document.getElementById("menu").onclick=()=>{
-document.getElementById("sidebar").classList.toggle("open");
+    document.getElementById("sidebar").classList.toggle("open");
 };
 
-/* SWITCH VIEWS */
-document.getElementById("add-mode").onclick=()=>{
-document.getElementById("view-add").style.display="flex";
-document.getElementById("view-study").style.display="none";
+/* BOTTOM NAV + VIEWS */
+function setNav(active){
+    [navStudy,navAdd,navDecks].forEach(btn=>btn.classList.remove("active"));
+    active.classList.add("active");
+}
+
+navStudy.onclick = ()=>{
+    viewStudy.style.display="flex";
+    viewAdd.style.display="none";
+    setNav(navStudy);
 };
 
+navAdd.onclick = ()=>{
+    viewStudy.style.display="none";
+    viewAdd.style.display="flex";
+    setNav(navAdd);
+};
+
+navDecks.onclick = ()=>{
+    // just open sidebar on mobile / act as focus on decks
+    document.getElementById("sidebar").classList.add("open");
+    setNav(navDecks);
+};
+
+/* LOGOUT */
 document.getElementById("logout").onclick=()=>signOut(auth);
 </script>
 
