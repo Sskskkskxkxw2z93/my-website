@@ -1,137 +1,887 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Slate — Flashcards</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    margin: 0;
-    background: #0f0f10;
-    color: white;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --text: #1A1814;
+    --text-muted: #7A7670;
+    --border: #E2DDD6;
+    --accent: #2D5BE3;
+    --accent-soft: #EEF2FD;
+    --accent-muted: #8FA8F0;
+    --danger: #D94035;
+    --danger-soft: #FDF0EF;
+    --success: #1D6B45;
+    --success-soft: #EAF5EF;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
   }
 
-  header {
-    padding: 16px;
-    font-size: 18px;
-    font-weight: 600;
-    background: #151518;
-  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
 
-  .container {
-    padding: 16px;
-  }
+  .app { display: flex; min-height: 100vh; }
 
-  .card {
-    background: #1c1c20;
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 12px;
-  }
+  .sidebar { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 
-  input, button {
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    margin-top: 8px;
-    width: 100%;
-  }
+  .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
 
-  button {
-    background: #4f7cff;
-    color: white;
-    cursor: pointer;
-  }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+  .logo-dot { color: var(--accent); }
 
-  button:hover {
-    background: #3d66d6;
+  .sidebar-section-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); padding: 16px 20px 6px; }
+
+  .folder-list { padding: 0 8px 8px; flex: 1; }
+
+  .folder-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; user-select: none; position: relative; }
+  .folder-item:hover { background: var(--surface2); }
+  .folder-item.active { background: var(--accent-soft); }
+  .folder-item.active .folder-name { color: var(--accent); font-weight: 500; }
+  .folder-item.special { }
+  .folder-item.special .folder-icon { }
+  .folder-item.special.active .folder-name { color: var(--danger); }
+
+  .folder-icon { font-size: 18px; color: var(--text-muted); flex-shrink: 0; }
+  .folder-name { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .folder-count { font-size: 11px; background: var(--surface2); color: var(--text-muted); padding: 1px 7px; border-radius: 20px; font-weight: 500; }
+  .folder-item.active .folder-count { background: var(--accent-soft); color: var(--accent-muted); }
+  .folder-item.special .folder-count { background: var(--danger-soft); color: var(--danger); }
+
+  .folder-delete-btn { display: none; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px; padding: 2px; border-radius: 4px; line-height: 1; }
+  .folder-item:hover .folder-delete-btn { display: block; }
+  .folder-delete-btn:hover { color: var(--danger); background: var(--danger-soft); }
+
+  .btn-new-folder { margin: 0 8px 12px; padding: 9px 12px; border: 1px dashed var(--border); background: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; transition: all 0.15s; width: calc(100% - 16px); }
+  .btn-new-folder:hover { border-color: var(--accent-muted); color: var(--accent); background: var(--accent-soft); }
+
+  .sidebar-divider { height: 1px; background: var(--border); margin: 6px 12px 6px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .main-header { padding: 28px 36px 20px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+
+  .main-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); letter-spacing: -0.5px; line-height: 1.2; }
+  .main-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+  .btn-primary { background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 10px 18px; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: opacity 0.15s, transform 0.1s; white-space: nowrap; flex-shrink: 0; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .main-content { flex: 1; overflow-y: auto; padding: 28px 36px; }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+
+  .flashcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: box-shadow 0.2s, transform 0.2s; perspective: 1000px; min-height: 160px; }
+  .flashcard:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+
+  .flashcard-inner { position: relative; width: 100%; height: 100%; min-height: 160px; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1); }
+  .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+
+  .flashcard-face { position: absolute; inset: 0; padding: 20px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; border-radius: var(--radius); overflow: hidden; }
+  .flashcard-front { background: var(--surface); }
+  .flashcard-back { background: var(--accent-soft); border: 1px solid rgba(45,91,227,0.15); transform: rotateY(180deg); }
+
+  .flashcard-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+  .flashcard-back .flashcard-label { color: var(--accent-muted); }
+
+  .flashcard-text { font-size: 15px; color: var(--text); flex: 1; display: flex; align-items: center; line-height: 1.5; word-break: break-word; }
+  .flashcard-back .flashcard-text { color: var(--accent); }
+
+  .flashcard-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 12px; opacity: 0; transition: opacity 0.15s; }
+  .flashcard:hover .flashcard-actions { opacity: 1; }
+
+  .card-btn { border: none; background: var(--surface2); cursor: pointer; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-muted); transition: all 0.12s; }
+  .card-btn:hover.delete { background: var(--danger-soft); color: var(--danger); }
+  .card-btn:hover.edit { background: var(--accent-soft); color: var(--accent); }
+
+  .empty-state { text-align: center; padding: 80px 24px; color: var(--text-muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; display: block; }
+  .empty-title { font-size: 17px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .empty-desc { font-size: 14px; color: var(--text-muted); }
+
+  .study-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 12px; }
+
+  .study-btn { background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 9px 20px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.15s, transform 0.1s; display: flex; align-items: center; gap: 7px; }
+  .study-btn:hover { opacity: 0.88; } .study-btn:active { transform: scale(0.97); }
+
+  .study-progress { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+
+  /* ── Study Overlay ── */
+  .study-overlay { display: none; position: fixed; inset: 0; background: rgba(10,8,6,0.7); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+  .study-overlay.open { display: flex; }
+
+  .study-session { background: var(--surface); border-radius: 20px; padding: 40px 48px 36px; max-width: 540px; width: 100%; box-shadow: var(--shadow-lg); text-align: center; position: relative; }
+
+  .study-close { position: absolute; top: 16px; right: 16px; background: var(--surface2); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+
+  .study-counter { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .study-card-container { background: var(--surface2); border-radius: var(--radius); padding: 36px 32px; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.25s, border-color 0.25s; margin-bottom: 16px; border: 1px solid var(--border); }
+  .study-card-container:hover { box-shadow: var(--shadow); }
+  .study-card-container.showing-answer { background: var(--accent-soft); border-color: rgba(45,91,227,0.2); }
+  .study-card-container.showing-answer .study-card-text { color: var(--accent); }
+  .study-card-container.showing-answer .study-side-label { color: var(--accent-muted); }
+
+  .study-side-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 14px; }
+  .study-card-text { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); line-height: 1.4; }
+
+  .study-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; min-height: 18px; }
+
+  /* answer buttons — hidden until answer shown */
+  .answer-btns { display: flex; gap: 12px; justify-content: center; margin-bottom: 16px; min-height: 48px; }
+
+  .answer-btn { border: none; border-radius: var(--radius-sm); padding: 11px 28px; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: opacity 0.15s, transform 0.1s; opacity: 0; pointer-events: none; }
+  .answer-btns.revealed .answer-btn { opacity: 1; pointer-events: auto; }
+  .answer-btn:active { transform: scale(0.96); }
+
+  .btn-wrong { background: var(--danger-soft); color: var(--danger); border: 1.5px solid rgba(217,64,53,0.25); }
+  .btn-wrong:hover { background: #f8d5d3; }
+  .btn-correct { background: var(--success-soft); color: var(--success); border: 1.5px solid rgba(29,107,69,0.25); }
+  .btn-correct:hover { background: #d3eddf; }
+
+  /* flash animations */
+  @keyframes flashGreen { 0%,100%{background:var(--surface2);} 30%{background:#d3eddf;} }
+  @keyframes flashRed   { 0%,100%{background:var(--surface2);} 30%{background:#f8d5d3;} }
+  .study-card-container.anim-correct { animation: flashGreen 0.45s ease; }
+  .study-card-container.anim-wrong   { animation: flashRed 0.45s ease; }
+
+  .study-nav { display: flex; gap: 10px; justify-content: center; }
+  .study-nav-btn { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); padding: 9px 22px; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; color: var(--text); }
+  .study-nav-btn:hover { background: var(--surface2); }
+
+  /* ── Results screen ── */
+  .study-results { display: none; flex-direction: column; align-items: center; gap: 12px; }
+  .study-results.show { display: flex; }
+  .study-main.hide { display: none; }
+
+  .result-score { font-family: 'DM Serif Display', serif; font-size: 52px; color: var(--text); line-height: 1; }
+  .result-label { font-size: 14px; color: var(--text-muted); }
+  .result-stats { display: flex; gap: 24px; margin: 8px 0; }
+  .result-stat { text-align: center; }
+  .result-stat-num { font-size: 24px; font-weight: 500; }
+  .result-stat-num.correct { color: var(--success); }
+  .result-stat-num.wrong { color: var(--danger); }
+  .result-stat-lbl { font-size: 12px; color: var(--text-muted); }
+
+  .result-incorrect-note { font-size: 13px; color: var(--text-muted); background: var(--danger-soft); border: 1px solid rgba(217,64,53,0.15); border-radius: var(--radius-sm); padding: 10px 16px; max-width: 320px; line-height: 1.5; }
+  .result-incorrect-note strong { color: var(--danger); }
+
+  .result-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .result-btn { border: 1px solid var(--border); background: var(--surface2); border-radius: var(--radius-sm); padding: 9px 20px; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text); transition: all 0.15s; }
+  .result-btn:hover { background: var(--surface); box-shadow: var(--shadow); }
+  .result-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .result-btn.primary:hover { opacity: 0.88; }
+  .result-btn.danger { background: var(--danger-soft); color: var(--danger); border-color: rgba(217,64,53,0.25); }
+  .result-btn.danger:hover { background: #f8d5d3; }
+
+  /* ── Incorrect folder badge in sidebar ── */
+  .incorrect-badge { background: var(--danger-soft); color: var(--danger); font-size: 11px; padding: 1px 7px; border-radius: 20px; font-weight: 500; }
+
+  /* ── Modal ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,8,6,0.6); z-index: 200; align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.open { display: flex; }
+
+  .modal { background: var(--surface); border-radius: 16px; padding: 32px; max-width: 440px; width: 100%; box-shadow: var(--shadow-lg); }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 20px; color: var(--text); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 6px; }
+  .form-input, .form-textarea { width: 100%; border: 1px solid var(--border); background: var(--bg); border-radius: var(--radius-sm); padding: 10px 14px; font-family: inherit; font-size: 15px; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .form-input:focus, .form-textarea:focus { border-color: var(--accent); background: var(--surface); }
+  .form-textarea { min-height: 90px; resize: vertical; line-height: 1.5; }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  .btn-secondary { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 18px; font-family: inherit; font-size: 14px; cursor: pointer; color: var(--text-muted); transition: all 0.15s; }
+  .btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+  .no-folder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40px; color: var(--text-muted); }
+  .no-folder-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.25; }
+  .no-folder-title { font-size: 18px; font-family: 'DM Serif Display', serif; color: var(--text); margin-bottom: 8px; }
+
+  .progress-bar-track { height: 3px; background: var(--border); border-radius: 99px; flex: 1; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    .app { flex-direction: column; min-height: 100svh; }
+    .sidebar { width: 100%; min-width: unset; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); flex-direction: column; overflow: hidden; }
+    .sidebar-header { padding: 14px 16px 12px; border-bottom: none; }
+    .logo { font-size: 20px; }
+    .sidebar-section-label { padding: 8px 16px 4px; }
+    .folder-list { padding: 0 8px 10px; display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .folder-list::-webkit-scrollbar { display: none; }
+    .folder-item { flex-shrink: 0; padding: 6px 13px; border-radius: 20px; gap: 7px; }
+    .folder-item .folder-delete-btn { display: none !important; }
+    .folder-icon { font-size: 15px; }
+    .folder-name { font-size: 13px; }
+    .folder-count { font-size: 10px; }
+    .btn-new-folder { display: none; }
+    .sidebar-divider { display: none; }
+    .mobile-fab { display: flex; position: fixed; bottom: 80px; right: 18px; z-index: 50; width: 50px; height: 50px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 22px; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(45,91,227,0.38); cursor: pointer; transition: transform 0.15s; }
+    .mobile-fab:active { transform: scale(0.92); }
+    .main { overflow: visible; min-height: 0; }
+    .main-header { padding: 14px 14px 12px; gap: 10px; }
+    .main-title { font-size: 20px; }
+    .main-subtitle { font-size: 12px; }
+    #addCardBtn { display: none !important; }
+    .main-content { padding: 10px 10px 96px; overflow-y: auto; }
+    .cards-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+    .flashcard { min-height: 120px; }
+    .flashcard-inner { min-height: 120px; }
+    .flashcard-face { padding: 13px; }
+    .flashcard-text { font-size: 13px; }
+    .flashcard-label { font-size: 9px; }
+    .flashcard-actions { opacity: 1; }
+    .study-bar { padding: 10px 14px; gap: 10px; }
+    .study-btn { padding: 9px 16px; font-size: 13px; }
+    .progress-bar-track { display: none; }
+    .study-overlay { padding: 16px; align-items: flex-end; }
+    .study-session { padding: 28px 18px 24px; border-radius: 20px 20px 16px 16px; }
+    .study-card-container { padding: 24px 18px; min-height: 130px; }
+    .study-card-text { font-size: 18px; }
+    .answer-btn { padding: 10px 16px; font-size: 14px; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal { padding: 22px 18px; border-radius: 20px 20px 0 0; }
+    .no-folder { padding: 40px 20px; }
   }
+  @media (min-width: 641px) { .mobile-fab { display: none !important; } }
 </style>
 </head>
-
 <body>
 
-<header>Slate — Flashcards</header>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">Flash<span class="logo-dot">.</span></div>
+    </div>
+    <div class="sidebar-section-label">Folders</div>
+    <div class="folder-list" id="folderList"></div>
+    <button class="btn-new-folder" onclick="openNewFolderModal()">
+      <span style="font-size:18px">＋</span> New folder
+    </button>
+  </aside>
 
-<div class="container">
+  <div class="main">
+    <div id="mainContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="no-folder" id="noFolderState">
+        <div class="no-folder-icon">📂</div>
+        <div class="no-folder-title">No folder selected</div>
+        <div>Create a folder or select one from the sidebar.</div>
+      </div>
 
-  <div class="card">
-    <h3>Create Flashcard</h3>
-    <input id="question" placeholder="Question" />
-    <input id="answer" placeholder="Answer" />
-    <button id="addBtn">Add Card</button>
+      <div id="folderView" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+        <div class="main-header">
+          <div>
+            <div class="main-title" id="folderTitle"></div>
+            <div class="main-subtitle" id="folderSubtitle"></div>
+          </div>
+          <button class="btn-primary" id="addCardBtn" onclick="openNewCardModal()">
+            <span style="font-size:16px">＋</span> Add card
+          </button>
+        </div>
+        <div class="main-content" id="cardsContainer"></div>
+        <div class="study-bar" id="studyBar" style="display:none;">
+          <button class="study-btn" onclick="startStudy()">▶ Study all</button>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+          <div class="study-progress" id="studyProgressLabel"></div>
+        </div>
+      </div>
+    </div>
   </div>
+</div>
 
-  <div id="cards"></div>
+<!-- Study Overlay -->
+<div class="study-overlay" id="studyOverlay">
+  <div class="study-session">
+    <button class="study-close" onclick="closeStudy()">✕</button>
 
+    <!-- Main study view -->
+    <div class="study-main" id="studyMain">
+      <div class="study-counter" id="studyCounter"></div>
+
+      <div class="study-card-container" id="studyCard" onclick="flipStudyCard()">
+        <div class="study-side-label" id="studySideLabel">Question</div>
+        <div class="study-card-text" id="studyCardText"></div>
+      </div>
+
+      <div class="study-hint" id="studyHint">Click card to reveal answer</div>
+
+      <!-- ✓ / ✗ buttons — appear after answer revealed -->
+      <div class="answer-btns" id="answerBtns">
+        <button class="answer-btn btn-wrong"   onclick="markCard(false)">✕ Got it wrong</button>
+        <button class="answer-btn btn-correct" onclick="markCard(true)">✓ Got it right</button>
+      </div>
+
+      <div class="study-nav">
+        <button class="study-nav-btn" onclick="studyPrev()">← Back</button>
+      </div>
+    </div>
+
+    <!-- Results screen -->
+    <div class="study-results" id="studyResults">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">Session complete</div>
+      <div class="result-score" id="resultScore"></div>
+      <div class="result-label" id="resultLabel"></div>
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="result-stat-num correct" id="resultCorrect"></div>
+          <div class="result-stat-lbl">Correct</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-num wrong" id="resultWrong"></div>
+          <div class="result-stat-lbl">Wrong</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-num" id="resultTotal"></div>
+          <div class="result-stat-lbl">Total</div>
+        </div>
+      </div>
+      <div class="result-incorrect-note" id="resultNote" style="display:none;"></div>
+      <div class="result-btns">
+        <button class="result-btn" onclick="closeStudy()">Done</button>
+        <button class="result-btn primary" onclick="restartStudy()">Study again</button>
+        <button class="result-btn danger" id="studyIncorrectBtn" onclick="studyIncorrectFolder()" style="display:none;">Retry incorrect →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Folder Modal -->
+<div class="modal-overlay" id="folderModal">
+  <div class="modal">
+    <div class="modal-title">New folder</div>
+    <div class="form-group">
+      <label class="form-label">Folder name</label>
+      <input class="form-input" id="folderNameInput" placeholder="e.g. Biology, Spanish Vocab…" onkeydown="if(event.key==='Enter')saveFolder()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeFolderModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveFolder()">Create folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- New/Edit Card Modal -->
+<div class="modal-overlay" id="cardModal">
+  <div class="modal">
+    <div class="modal-title" id="cardModalTitle">Add flashcard</div>
+    <div class="form-group">
+      <label class="form-label">Question (front)</label>
+      <textarea class="form-textarea" id="cardFrontInput" placeholder="What is the capital of France?"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Answer (back)</label>
+      <textarea class="form-textarea" id="cardBackInput" placeholder="Paris"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeCardModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveCard()">Save card</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
-/* ================= FIREBASE SETUP ================= */
+  // ── Firebase Setup ──
+  import { initializeApp }                          from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc,
+           onSnapshot }                             from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey:            "AIzaSyDLn5hL02geNL0eMU5xXXUKkrLKA0QZhfs",
+    authDomain:        "slate-app-8fc4c.firebaseapp.com",
+    projectId:         "slate-app-8fc4c",
+    storageBucket:     "slate-app-8fc4c.firebasestorage.app",
+    messagingSenderId: "1038552772007",
+    appId:             "1:1038552772007:web:855420f4f2181952cc9a82",
+    measurementId:     "G-V8ZPJLT501"
+  };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDLn5hL02geNL0eMU5xXXUKkrLKA0QZhfs",
-  authDomain: "slate-app-8fc4c.firebaseapp.com",
-  projectId: "slate-app-8fc4c",
-  storageBucket: "slate-app-8fc4c.firebasestorage.app",
-  messagingSenderId: "1038552772007",
-  appId: "1:1038552772007:web:855420f4f2181952cc9a82",
-  measurementId: "G-V8ZPJLT501"
-};
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
 
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
+  // Single document that holds all data — easy to expand to per-user later
+  const DATA_DOC = doc(db, 'flashcards', 'shared');
 
-/* ================= APP LOGIC ================= */
+  // ── Show a subtle sync indicator ──
+  function setSyncStatus(state) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    if (state === 'saving')  { el.textContent = '⏳ Saving…';  el.style.color = 'var(--text-muted)'; }
+    if (state === 'saved')   { el.textContent = '✓ Synced';    el.style.color = 'var(--success)'; }
+    if (state === 'error')   { el.textContent = '⚠ Sync error'; el.style.color = 'var(--danger)'; }
+    if (state === 'live')    { el.textContent = '🔴 Live';      el.style.color = 'var(--accent)'; }
+  }
 
-const cardsDiv = document.getElementById("cards");
-const addBtn = document.getElementById("addBtn");
+  const INCORRECT_ID = '__incorrect__';
 
-async function loadCards() {
-  cardsDiv.innerHTML = "";
-  const snapshot = await getDocs(collection(db, "flashcards"));
+  let folders = [];
+  let cards   = {};
+  let activeFolderId = null;
+  let editingCardId  = null;
 
-  snapshot.forEach(doc => {
-    const data = doc.data();
+  // Study state
+  let studyDeck    = [];
+  let studyIndex   = 0;
+  let studyShowing = false;
+  let studyResults = { correct: [], wrong: [] };
 
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <strong>Q:</strong> ${data.question}<br/>
-      <strong>A:</strong> ${data.answer}
-    `;
+  // Debounce save so rapid edits don't hammer Firestore
+  let saveTimer = null;
+  function save() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try {
+        await setDoc(DATA_DOC, { folders, cards });
+      } catch(e) {
+        console.error('Save failed', e);
+      }
+    }, 600);
+  }
 
-    cardsDiv.appendChild(div);
+  // ── Bootstrap: load once, then subscribe to live updates ──
+  async function init() {
+    try {
+      const snap = await getDoc(DATA_DOC);
+      if (snap.exists()) {
+        const d = snap.data();
+        folders = d.folders || [];
+        cards   = d.cards   || {};
+      }
+    } catch(e) {
+      console.warn('Could not load from Firestore, starting empty.', e);
+    }
+
+    // Seed demo data if first run
+    if (!folders.length) {
+      const id1 = uid(), id2 = uid();
+      folders = [
+        { id: id1, name: 'Spanish Vocabulary' },
+        { id: id2, name: 'Biology' }
+      ];
+      cards[id1] = [
+        { id: uid(), front: 'Hello',        back: 'Hola' },
+        { id: uid(), front: 'Thank you',    back: 'Gracias' },
+        { id: uid(), front: 'How are you?', back: '¿Cómo estás?' },
+      ];
+      cards[id2] = [
+        { id: uid(), front: 'What is the powerhouse of the cell?', back: 'The mitochondria' },
+        { id: uid(), front: 'What is photosynthesis?', back: 'The process by which plants convert sunlight into glucose using CO₂ and water.' },
+      ];
+      await setDoc(DATA_DOC, { folders, cards });
+    }
+
+    renderFolders();
+    if (folders.length) selectFolder(folders[0].id);
+    renderFolderView();
+
+    // Live listener — updates UI when another device saves
+    onSnapshot(DATA_DOC, snapshot => {
+      if (!snapshot.exists()) return;
+      const d = snapshot.data();
+      folders = d.folders || [];
+      cards   = d.cards   || {};
+      renderFolders();
+      renderFolderView();
+      setTimeout(() => setSyncStatus('saved'), 1500);
+    }, err => {
+      console.error('Live sync error', err);
+    });
+  }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  /* ─── Folders ─── */
+  function renderFolders() {
+    const list = document.getElementById('folderList');
+    const incorrectCards = cards[INCORRECT_ID] || [];
+
+    let html = '';
+
+    // Regular folders
+    const regular = folders.filter(f => f.id !== INCORRECT_ID);
+    if (!regular.length) {
+      html += '<div style="padding:8px 12px;font-size:13px;color:var(--text-muted)">No folders yet</div>';
+    } else {
+      html += regular.map(f => {
+        const count = (cards[f.id] || []).length;
+        const active = f.id === activeFolderId ? 'active' : '';
+        return `<div class="folder-item ${active}" onclick="selectFolder('${f.id}')">
+          <span class="folder-icon">📁</span>
+          <span class="folder-name">${esc(f.name)}</span>
+          <span class="folder-count">${count}</span>
+          <button class="folder-delete-btn" onclick="event.stopPropagation();deleteFolder('${f.id}')" title="Delete">✕</button>
+        </div>`;
+      }).join('');
+    }
+
+    // Incorrect folder — only show if it has cards
+    if (incorrectCards.length) {
+      const active = activeFolderId === INCORRECT_ID ? 'active' : '';
+      html += `<div class="sidebar-divider"></div>
+        <div class="folder-item special ${active}" onclick="selectFolder('${INCORRECT_ID}')">
+          <span class="folder-icon">⚠️</span>
+          <span class="folder-name" style="color:var(--danger)">Incorrect</span>
+          <span class="incorrect-badge">${incorrectCards.length}</span>
+          <button class="folder-delete-btn" onclick="event.stopPropagation();clearIncorrect()" title="Clear">✕</button>
+        </div>`;
+    }
+
+    list.innerHTML = html;
+  }
+
+  function selectFolder(id) {
+    activeFolderId = id;
+    renderFolders();
+    renderFolderView();
+  }
+
+  function deleteFolder(id) {
+    const f = folders.find(x => x.id === id);
+    if (!confirm(`Delete "${f.name}" and all its cards?`)) return;
+    folders = folders.filter(x => x.id !== id);
+    delete cards[id];
+    if (activeFolderId === id) activeFolderId = null;
+    save(); renderFolders(); renderFolderView();
+  }
+
+  function clearIncorrect() {
+    if (!confirm('Clear all incorrect cards?')) return;
+    cards[INCORRECT_ID] = [];
+    if (activeFolderId === INCORRECT_ID) activeFolderId = null;
+    save(); renderFolders(); renderFolderView();
+  }
+
+  function renderFolderView() {
+    const noState = document.getElementById('noFolderState');
+    const view    = document.getElementById('folderView');
+    const addBtn  = document.getElementById('addCardBtn');
+
+    if (!activeFolderId) {
+      noState.style.display = 'flex'; view.style.display = 'none'; return;
+    }
+
+    const isIncorrect = activeFolderId === INCORRECT_ID;
+    const folder = isIncorrect
+      ? { name: '⚠️ Incorrect' }
+      : folders.find(f => f.id === activeFolderId);
+
+    if (!folder) { activeFolderId = null; renderFolderView(); return; }
+
+    noState.style.display = 'none';
+    view.style.display = 'flex';
+
+    const deck = cards[activeFolderId] || [];
+    document.getElementById('folderTitle').textContent = folder.name;
+    document.getElementById('folderSubtitle').textContent =
+      deck.length === 0 ? 'No cards' : `${deck.length} card${deck.length !== 1 ? 's' : ''}`;
+
+    // Hide "Add card" for Incorrect folder
+    addBtn.style.display = isIncorrect ? 'none' : 'flex';
+
+    renderCards(deck, isIncorrect);
+
+    const bar = document.getElementById('studyBar');
+    bar.style.display = deck.length > 0 ? 'flex' : 'none';
+    document.getElementById('studyProgressLabel').textContent = `${deck.length} cards`;
+    document.getElementById('progressFill').style.width = '0%';
+  }
+
+  /* ─── Cards ─── */
+  function renderCards(deck, readonly) {
+    const container = document.getElementById('cardsContainer');
+    if (!deck.length) {
+      container.innerHTML = `<div class="empty-state">
+        <span class="empty-icon">🃏</span>
+        <div class="empty-title">No cards here</div>
+        <div class="empty-desc">${readonly ? 'Study a folder to collect incorrect cards here.' : 'Click "Add card" to create your first flashcard.'}</div>
+      </div>`;
+      return;
+    }
+    container.innerHTML = `<div class="cards-grid">${deck.map(c => cardHTML(c, readonly)).join('')}</div>`;
+  }
+
+  function cardHTML(c, readonly) {
+    const actions = readonly ? '' : `<div class="flashcard-actions">
+      <button class="card-btn edit"   onclick="event.stopPropagation();editCard('${c.id}')"   title="Edit">✎</button>
+      <button class="card-btn delete" onclick="event.stopPropagation();deleteCard('${c.id}')" title="Delete">✕</button>
+    </div>`;
+    return `<div class="flashcard" id="card-${c.id}">
+      <div class="flashcard-inner">
+        <div class="flashcard-face flashcard-front">
+          <div class="flashcard-label">Question</div>
+          <div class="flashcard-text">${esc(c.front)}</div>
+          ${actions}
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <div class="flashcard-label">Answer</div>
+          <div class="flashcard-text">${esc(c.back)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('cardsContainer').addEventListener('click', e => {
+    const card = e.target.closest('.flashcard');
+    if (card && !e.target.closest('.card-btn')) card.classList.toggle('flipped');
   });
-}
 
-addBtn.addEventListener("click", async () => {
-  const q = document.getElementById("question").value;
-  const a = document.getElementById("answer").value;
+  function editCard(id) {
+    const c = (cards[activeFolderId] || []).find(x => x.id === id);
+    if (!c) return;
+    editingCardId = id;
+    document.getElementById('cardModalTitle').textContent = 'Edit card';
+    document.getElementById('cardFrontInput').value = c.front;
+    document.getElementById('cardBackInput').value  = c.back;
+    document.getElementById('cardModal').classList.add('open');
+  }
 
-  if (!q || !a) return;
+  function deleteCard(id) {
+    if (!confirm('Delete this card?')) return;
+    cards[activeFolderId] = (cards[activeFolderId] || []).filter(c => c.id !== id);
+    save(); renderFolders(); renderFolderView();
+  }
 
-  await addDoc(collection(db, "flashcards"), {
-    question: q,
-    answer: a,
-    createdAt: Date.now()
+  /* ─── Modals ─── */
+  function openNewFolderModal() {
+    document.getElementById('folderNameInput').value = '';
+    document.getElementById('folderModal').classList.add('open');
+    setTimeout(() => document.getElementById('folderNameInput').focus(), 50);
+  }
+  function closeFolderModal() { document.getElementById('folderModal').classList.remove('open'); }
+
+  function saveFolder() {
+    const name = document.getElementById('folderNameInput').value.trim();
+    if (!name) return;
+    const id = uid();
+    folders.push({ id, name });
+    cards[id] = [];
+    save(); closeFolderModal(); renderFolders(); selectFolder(id);
+  }
+
+  function openNewCardModal() {
+    editingCardId = null;
+    document.getElementById('cardModalTitle').textContent = 'Add flashcard';
+    document.getElementById('cardFrontInput').value = '';
+    document.getElementById('cardBackInput').value  = '';
+    document.getElementById('cardModal').classList.add('open');
+    setTimeout(() => document.getElementById('cardFrontInput').focus(), 50);
+  }
+  function closeCardModal() { document.getElementById('cardModal').classList.remove('open'); editingCardId = null; }
+
+  function saveCard() {
+    const front = document.getElementById('cardFrontInput').value.trim();
+    const back  = document.getElementById('cardBackInput').value.trim();
+    if (!front || !back) return;
+    if (!cards[activeFolderId]) cards[activeFolderId] = [];
+    if (editingCardId) {
+      const deck = cards[activeFolderId];
+      const idx  = deck.findIndex(c => c.id === editingCardId);
+      if (idx !== -1) { deck[idx].front = front; deck[idx].back = back; }
+    } else {
+      cards[activeFolderId].push({ id: uid(), front, back });
+    }
+    save(); closeCardModal(); renderFolders(); renderFolderView();
+  }
+
+  /* ─── Study Mode ─── */
+  function startStudy() {
+    studyDeck    = [...(cards[activeFolderId] || [])];
+    if (!studyDeck.length) return;
+    studyIndex   = 0;
+    studyShowing = false;
+    studyResults = { correct: [], wrong: [] };
+    showStudyMain();
+    document.getElementById('studyOverlay').classList.add('open');
+    renderStudyCard();
+  }
+
+  function restartStudy() {
+    studyIndex   = 0;
+    studyShowing = false;
+    studyResults = { correct: [], wrong: [] };
+    showStudyMain();
+    renderStudyCard();
+  }
+
+  function studyIncorrectFolder() {
+    closeStudy();
+    selectFolder(INCORRECT_ID);
+    setTimeout(() => startStudy(), 80);
+  }
+
+  function showStudyMain() {
+    document.getElementById('studyMain').classList.remove('hide');
+    document.getElementById('studyResults').classList.remove('show');
+  }
+
+  function showStudyResults() {
+    document.getElementById('studyMain').classList.add('hide');
+    const res = document.getElementById('studyResults');
+    res.classList.add('show');
+
+    const total   = studyDeck.length;
+    const correct = studyResults.correct.length;
+    const wrong   = studyResults.wrong.length;
+    const pct     = total ? Math.round((correct / total) * 100) : 0;
+
+    document.getElementById('resultScore').textContent   = pct + '%';
+    document.getElementById('resultLabel').textContent   = pct === 100 ? '🎉 Perfect score!' : pct >= 70 ? 'Good job!' : 'Keep practising!';
+    document.getElementById('resultCorrect').textContent = correct;
+    document.getElementById('resultWrong').textContent   = wrong;
+    document.getElementById('resultTotal').textContent   = total;
+
+    const note    = document.getElementById('resultNote');
+    const retryBtn = document.getElementById('studyIncorrectBtn');
+
+    if (wrong > 0) {
+      // Save wrong cards to Incorrect folder (deduplicated by id)
+      if (!cards[INCORRECT_ID]) cards[INCORRECT_ID] = [];
+      const existingIds = new Set(cards[INCORRECT_ID].map(c => c.id));
+      studyResults.wrong.forEach(c => { if (!existingIds.has(c.id)) cards[INCORRECT_ID].push(c); });
+      save(); renderFolders();
+
+      note.innerHTML = `<strong>${wrong} card${wrong !== 1 ? 's' : ''}</strong> added to your <strong>Incorrect</strong> folder so you can practise them again.`;
+      note.style.display = 'block';
+      retryBtn.style.display = 'inline-flex';
+    } else {
+      note.style.display   = 'none';
+      retryBtn.style.display = 'none';
+    }
+
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('studyProgressLabel').textContent = `${total} / ${total} done`;
+  }
+
+  function closeStudy() {
+    document.getElementById('studyOverlay').classList.remove('open');
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('studyProgressLabel').textContent = `${studyDeck.length} cards`;
+    showStudyMain();
+  }
+
+  function renderStudyCard() {
+    const c     = studyDeck[studyIndex];
+    const total = studyDeck.length;
+    studyShowing = false;
+
+    document.getElementById('studyCounter').textContent    = `${studyIndex + 1} / ${total}`;
+    document.getElementById('studyCardText').textContent   = c.front;
+    document.getElementById('studySideLabel').textContent  = 'Question';
+    document.getElementById('studyCard').classList.remove('showing-answer', 'anim-correct', 'anim-wrong');
+    document.getElementById('studyHint').textContent       = 'Click card to reveal answer';
+    document.getElementById('answerBtns').classList.remove('revealed');
+
+    const pct = Math.round((studyIndex / total) * 100);
+    document.getElementById('progressFill').style.width       = pct + '%';
+    document.getElementById('studyProgressLabel').textContent = `${studyIndex} / ${total} done`;
+  }
+
+  function flipStudyCard() {
+    const c  = studyDeck[studyIndex];
+    studyShowing = !studyShowing;
+    const el = document.getElementById('studyCard');
+    if (studyShowing) {
+      document.getElementById('studyCardText').textContent  = c.back;
+      document.getElementById('studySideLabel').textContent = 'Answer';
+      el.classList.add('showing-answer');
+      document.getElementById('studyHint').textContent      = 'How did you do?';
+      document.getElementById('answerBtns').classList.add('revealed');
+    } else {
+      document.getElementById('studyCardText').textContent  = c.front;
+      document.getElementById('studySideLabel').textContent = 'Question';
+      el.classList.remove('showing-answer');
+      document.getElementById('studyHint').textContent      = 'Click card to reveal answer';
+      document.getElementById('answerBtns').classList.remove('revealed');
+    }
+  }
+
+  function markCard(correct) {
+    const c  = studyDeck[studyIndex];
+    const el = document.getElementById('studyCard');
+
+    if (correct) {
+      studyResults.correct.push(c);
+      el.classList.add('anim-correct');
+    } else {
+      studyResults.wrong.push(c);
+      el.classList.add('anim-wrong');
+    }
+
+    // Advance after brief flash
+    setTimeout(() => {
+      el.classList.remove('anim-correct', 'anim-wrong');
+      if (studyIndex >= studyDeck.length - 1) {
+        showStudyResults();
+      } else {
+        studyIndex++;
+        renderStudyCard();
+      }
+    }, 420);
+  }
+
+  function studyPrev() {
+    if (studyIndex > 0) { studyIndex--; renderStudyCard(); }
+  }
+
+  /* ─── Keyboard shortcuts ─── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeFolderModal(); closeCardModal(); closeStudy(); }
+    if (document.getElementById('studyOverlay').classList.contains('open')) {
+      if (e.key === ' ')           { e.preventDefault(); flipStudyCard(); }
+      if (e.key === 'ArrowLeft')   studyPrev();
+      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        if (studyShowing) markCard(true);
+      }
+      if (e.key === 'ArrowDown' || e.key === 'Backspace') {
+        if (studyShowing) markCard(false);
+      }
+    }
   });
 
-  document.getElementById("question").value = "";
-  document.getElementById("answer").value = "";
+  // Close modals on backdrop click
+  ['folderModal','cardModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+      if (e.target === e.currentTarget) { closeFolderModal(); closeCardModal(); }
+    });
+  });
+  document.getElementById('studyOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeStudy();
+  });
 
-  loadCards();
-});
+  /* ─── Init ─── */
+  init();
 
-loadCards();
+  // Expose functions that onclick= attributes reference
+  window.selectFolder       = selectFolder;
+  window.deleteFolder       = deleteFolder;
+  window.clearIncorrect     = clearIncorrect;
+  window.openNewFolderModal = openNewFolderModal;
+  window.closeFolderModal   = closeFolderModal;
+  window.saveFolder         = saveFolder;
+  window.openNewCardModal   = openNewCardModal;
+  window.closeCardModal     = closeCardModal;
+  window.saveCard           = saveCard;
+  window.editCard           = editCard;
+  window.deleteCard         = deleteCard;
+  window.startStudy         = startStudy;
+  window.closeStudy         = closeStudy;
+  window.restartStudy       = restartStudy;
+  window.studyIncorrectFolder = studyIncorrectFolder;
+  window.flipStudyCard      = flipStudyCard;
+  window.markCard           = markCard;
+  window.studyPrev          = studyPrev;
 </script>
-
 </body>
 </html>
