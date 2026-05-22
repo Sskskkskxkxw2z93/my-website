@@ -80,7 +80,7 @@
 
   .main-content { flex: 1; overflow-y: auto; padding: 28px 36px; }
 
-  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
 
   .flashcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: box-shadow 0.2s, transform 0.2s; perspective: 1000px; min-height: 160px; }
   .flashcard:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
@@ -271,6 +271,8 @@
       <span style="font-size:18px">＋</span> New folder
     </button>
   </aside>
+
+  <button class="mobile-fab" id="mobileFab" onclick="(activeFolderId ? openNewCardModal : openNewFolderModal)()">＋</button>
 
   <div class="main">
     <div id="mainContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
@@ -811,6 +813,9 @@
     const c  = studyDeck[studyIndex];
     const el = document.getElementById('studyCard');
 
+    // Hide answer buttons immediately so user can't double-tap
+    document.getElementById('answerBtns').classList.remove('revealed');
+
     if (correct) {
       studyResults.correct.push(c);
       el.classList.add('anim-correct');
@@ -819,9 +824,12 @@
       el.classList.add('anim-wrong');
     }
 
-    // Advance after brief flash
+    // Advance after brief flash — reset ALL state cleanly before showing next card
     setTimeout(() => {
-      el.classList.remove('anim-correct', 'anim-wrong');
+      el.classList.remove('anim-correct', 'anim-wrong', 'showing-answer');
+      document.getElementById('studyCardText').textContent  = '';
+      document.getElementById('studySideLabel').textContent = 'Question';
+      document.getElementById('studyHint').textContent      = '';
       if (studyIndex >= studyDeck.length - 1) {
         showStudyResults();
       } else {
