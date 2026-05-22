@@ -272,7 +272,7 @@
     </button>
   </aside>
 
-  <button class="mobile-fab" id="mobileFab" onclick="(activeFolderId ? openNewCardModal : openNewFolderModal)()">＋</button>
+  <button class="mobile-fab" id="mobileFab" onclick="handleFabClick()">＋</button>
 
   <div class="main">
     <div id="mainContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
@@ -294,7 +294,7 @@
         </div>
         <div class="main-content" id="cardsContainer"></div>
         <div class="study-bar" id="studyBar" style="display:none;">
-          <button class="study-btn" onclick="startStudy()">▶ Study all</button>
+          <button class="study-btn" onclick="startStudy()">Study all</button>
           <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
           <div class="study-progress" id="studyProgressLabel"></div>
         </div>
@@ -890,6 +890,7 @@
   window.flipStudyCard      = flipStudyCard;
   window.markCard           = markCard;
   window.studyPrev          = studyPrev;
+  window.handleFabClick     = () => activeFolderId ? openNewCardModal() : openNewFolderModal();
 </script>
 </body>
 </html>
