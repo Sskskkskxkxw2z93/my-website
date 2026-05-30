@@ -30,14 +30,19 @@
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
 
   /* LAYOUT */
-  .app { display: flex; height: 100vh; height: 100dvh; }
+  .app { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
+  /* Sidebar always overlays — slides in/out on every device */
   .sidebar {
-    width: 260px; min-width: 260px; background: var(--surface);
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 260px; background: var(--surface);
     border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(.4,0,.2,1);
-    z-index: 10;
+    z-index: 20;
   }
-  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .sidebar.open { transform: translateX(0); }
+  /* Main always fills full width; sidebar overlays on top */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; }
 
   /* SIDEBAR HEADER */
   .sidebar-header {
@@ -108,7 +113,7 @@
     display: flex; align-items: center; gap: 12px; background: var(--surface);
     min-height: 56px;
   }
-  .menu-btn { display: none; }
+  .menu-btn { display: flex; }
   .main-title { font-family: 'DM Serif Display', serif; font-size: 20px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-actions { display: flex; gap: 7px; flex-shrink: 0; }
 
@@ -371,24 +376,19 @@
   .sync-dot.syncing { background: #e8b84b; animation: pulse 1s infinite; }
   .sync-dot.error { background: var(--wrong); }
 
-  /* MOBILE OVERLAY */
-  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9; }
+  /* OVERLAY — used on all devices when sidebar is open */
+  .sidebar-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 19;
+    pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+  .sidebar-overlay.open { pointer-events: all; opacity: 1; }
 
   @keyframes pulse { 0%,100%{opacity:0.25;transform:scale(0.8)} 50%{opacity:0.7;transform:scale(1)} }
   @keyframes fadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
 
   /* RESPONSIVE */
   @media (max-width: 768px) {
-    .sidebar {
-      position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%);
-      width: 260px; z-index: 10;
-    }
-    .sidebar.open { transform: translateX(0); }
     .sidebar-overlay { display: block; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
     .sidebar-overlay.open { pointer-events: all; opacity: 1; }
-    .menu-btn { display: flex; }
     .main-content { padding: 14px; }
-    .stats-row { gap: 8px; }
     .deck-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
     .flashcard-face { padding: 32px 22px; min-height: 190px; }
     .card-text { font-size: 21px; }
@@ -614,6 +614,11 @@ onAuthStateChanged(auth, async user => {
 
     // Subscribe to real-time Firestore updates
     subscribeToData();
+    // Open sidebar by default on larger screens
+    if (window.innerWidth > 768) {
+      document.getElementById('sidebar').classList.add('open');
+      // No overlay on initial open for desktop
+    }
   } else {
     // Not signed in — show auth screen
     document.getElementById('authScreen').style.display = 'block';
@@ -1360,16 +1365,20 @@ function showToast(msg) {
   toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
-// ── MOBILE ─────────────────────────────────────────────────────────────
+// ── SIDEBAR TOGGLE — works on all devices ─────────────────────────────
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebarOverlay').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('open', isOpen);
 }
 function closeSidebar() {
-  if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebarOverlay').classList.remove('open');
-  }
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
 }
 
 // ── KEYBOARD ───────────────────────────────────────────────────────────
@@ -1402,7 +1411,7 @@ Object.assign(window, {
   moveDeckToFolder, submitMoveDeck,
   confirmDeleteFolder, deleteFolder, confirmDeleteDeck, deleteDeck,
   closeModal, closeModalIfOuter,
-  toggleFolder, toggleSidebar, closeSidebar,
+  toggleFolder, toggleSidebar, closeSidebar, openSidebar,
   moveFolderUp, moveFolderDown, moveDeckUp, moveDeckDown,
   switchAuthTab, submitAuth, continueAnonymously,
   showSignInPrompt, submitSignInPrompt, doSignOut,
