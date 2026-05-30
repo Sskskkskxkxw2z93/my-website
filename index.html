@@ -1,1422 +1,1033 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>FlashDeck</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #111113;
-    --surface: #1a1a1d;
-    --surface2: #212125;
-    --surface3: #2a2a2f;
-    --border: #2e2e34;
-    --border2: #3a3a42;
-    --accent: #e8e8f0;
-    --accent-dim: rgba(232,232,240,0.12);
-    --wrong: #d96c6c;
-    --wrong-dim: rgba(217,108,108,0.12);
-    --correct: #6cbf8e;
-    --correct-dim: rgba(108,191,142,0.12);
-    --text: #ededf0;
-    --text2: #8a8a96;
-    --text3: #4e4e58;
-    --radius: 14px;
-    --radius-sm: 9px;
-    --shadow: 0 8px 32px rgba(0,0,0,0.5);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --surface-color: #1c1c1e;
+            --surface-light: #2c2c2e;
+            --text-color: #ffffff;
+            --text-secondary: #aeaeb2;
+            --accent-color: #0a84ff;
+            --correct-color: #30d158;
+            --incorrect-color: #ff453a;
+            --border-color: #38383a;
+        }
 
-  /* LAYOUT */
-  .app { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
-  /* Sidebar always overlays — slides in/out on every device */
-  .sidebar {
-    position: fixed; left: 0; top: 0; bottom: 0;
-    width: 260px; background: var(--surface);
-    border-right: 1px solid var(--border); display: flex; flex-direction: column;
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
-    z-index: 20;
-  }
-  .sidebar.open { transform: translateX(0); }
-  /* Main always fills full width; sidebar overlays on top */
-  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-  /* SIDEBAR HEADER */
-  .sidebar-header {
-    padding: 18px 16px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .logo { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); letter-spacing: -0.3px; }
-  .sidebar-actions { margin-left: auto; display: flex; gap: 5px; }
-  .icon-btn {
-    width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border);
-    background: transparent; color: var(--text2); cursor: pointer; display: flex;
-    align-items: center; justify-content: center; font-size: 13px; font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-  .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
-  .add-btn {
-    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
-    background: transparent; color: var(--text2); cursor: pointer; display: flex;
-    align-items: center; justify-content: center; font-size: 18px; font-weight: 300;
-    line-height: 1; font-family: 'DM Sans', sans-serif;
-    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
-    flex-shrink: 0;
-  }
-  .add-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); transform: rotate(90deg); }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-  /* FOLDER LIST */
-  .folder-list { flex: 1; overflow-y: auto; padding: 10px 8px; }
-  .folder-list::-webkit-scrollbar { width: 3px; }
-  .folder-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        /* Responsive container to match iPad aspect ratio beautifully on desktop */
+        .app-container {
+            width: 100%;
+            max-width: 1024px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 16px;
+        }
 
-  .folder-item { border-radius: var(--radius-sm); margin-bottom: 1px; }
-  .folder-header {
-    display: flex; align-items: center; gap: 8px; padding: 8px 9px;
-    cursor: pointer; border-radius: var(--radius-sm); user-select: none;
-    transition: background 0.12s;
-  }
-  .folder-header:hover { background: var(--surface2); }
-  .folder-name { font-size: 13px; font-weight: 500; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-  .folder-meta { font-size: 11px; color: var(--text3); flex-shrink: 0; }
-  .folder-chevron { font-size: 9px; color: var(--text3); flex-shrink: 0; transition: transform 0.18s; }
-  .folder-chevron.open { transform: rotate(90deg); }
-  .folder-dots { opacity: 0; transition: opacity 0.12s; flex-shrink: 0; cursor: pointer; font-size: 15px; color: var(--text3); padding: 2px 3px; border-radius: 4px; line-height: 1; }
-  .folder-header:hover .folder-dots { opacity: 1; }
-  .folder-dots:hover { background: var(--surface3); color: var(--text); }
+        /* Screens management */
+        .screen {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+        }
 
-  /* DECK LIST */
-  .deck-list { padding-left: 22px; overflow: hidden; }
-  .deck-item {
-    display: flex; align-items: center; gap: 8px; padding: 6px 9px;
-    border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1px;
-    transition: background 0.12s;
-  }
-  .deck-item:hover { background: var(--surface2); }
-  .deck-item.active { background: var(--accent-dim); }
-  .deck-item.active .deck-name { color: var(--text); }
-  .deck-name { font-size: 13px; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text2); }
-  .deck-count { font-size: 11px; color: var(--text3); flex-shrink: 0; }
-  .deck-dots { opacity: 0; transition: opacity 0.12s; flex-shrink: 0; cursor: pointer; font-size: 14px; color: var(--text3); padding: 2px 3px; border-radius: 4px; line-height: 1; }
-  .deck-item:hover .deck-dots { opacity: 1; }
-  .deck-dots:hover { background: var(--surface3); color: var(--text); }
-  .review-deck-item { color: var(--text3); font-size: 12px; }
+        .screen.active {
+            display: flex;
+        }
 
-  /* MAIN HEADER */
-  .main-header {
-    padding: 14px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 12px; background: var(--surface);
-    min-height: 56px;
-  }
-  .menu-btn { display: flex; }
-  .main-title { font-family: 'DM Serif Display', serif; font-size: 20px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .header-actions { display: flex; gap: 7px; flex-shrink: 0; }
+        /* Header Layout */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 4px;
+            margin-bottom: 16px;
+        }
 
-  .btn {
-    padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
-    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all 0.12s; display: flex; align-items: center; gap: 5px;
-    white-space: nowrap;
-  }
-  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .btn-primary:hover { background: var(--accent); opacity: 0.9; }
-  .btn-secondary { background: transparent; color: var(--text2); border-color: var(--border); }
-  .btn-secondary:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
-  .btn-danger { background: transparent; color: var(--wrong); border-color: rgba(217,108,108,0.3); }
-  .btn-danger:hover { background: var(--wrong-dim); }
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-  /* MAIN CONTENT */
-  .main-content { flex: 1; overflow-y: auto; padding: 20px; }
-  .main-content::-webkit-scrollbar { width: 3px; }
-  .main-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .back-btn, .action-icon {
+            color: var(--accent-color);
+            background: none;
+            border: none;
+            font-size: 17px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
 
-  /* HOME VIEW */
-  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px; text-align: center;
-  }
-  .stat-num { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); }
-  .stat-label { font-size: 11px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .action-icon {
+            font-size: 20px;
+        }
 
-  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+        h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-left: 4px;
+        }
 
-  .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-  .deck-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 16px; cursor: pointer; transition: border-color 0.15s, transform 0.15s;
-  }
-  .deck-card:hover { border-color: var(--border2); transform: translateY(-1px); }
-  .deck-card-name { font-size: 14px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
-  .deck-card-meta { font-size: 12px; color: var(--text3); }
-  .deck-card-review { font-size: 11px; color: var(--wrong); margin-top: 7px; }
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+        }
 
-  /* REVIEW SECTION on home */
-  .review-section {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px; margin-bottom: 22px;
-  }
-  .review-section-title { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
-  .review-pills { display: flex; flex-wrap: wrap; gap: 7px; }
-  .review-pill {
-    background: var(--surface2); border: 1px solid var(--border2);
-    border-radius: 100px; padding: 4px 11px; font-size: 12px; color: var(--text2);
-    cursor: pointer; transition: background 0.12s, color 0.12s;
-  }
-  .review-pill:hover { background: var(--surface3); color: var(--text); }
-  .review-pill strong { color: var(--wrong); }
+        /* Decks Main View List */
+        .deck-list {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
 
-  /* DECK VIEW */
-  .deck-card-list { display: flex; flex-direction: column; gap: 8px; }
-  .deck-card-row {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start;
-  }
-  .dcr-num { font-size: 12px; color: var(--text3); width: 24px; flex-shrink: 0; padding-top: 2px; }
-  .dcr-body { flex: 1; }
-  .dcr-q { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
-  .dcr-a { font-size: 13px; color: var(--text2); }
-  .dcr-review { font-size: 11px; color: var(--wrong); margin-top: 5px; }
+        .deck-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            color: var(--text-color);
+            text-decoration: none;
+        }
 
-  /* EDIT VIEW */
-  .edit-toolbar { display: flex; gap: 7px; margin-bottom: 16px; flex-wrap: wrap; }
-  .card-list-edit { display: flex; flex-direction: column; gap: 8px; }
-  .card-edit-item {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px; display: flex; gap: 10px; align-items: flex-start;
-    transition: border-color 0.12s;
-  }
-  .card-edit-item:hover { border-color: var(--border2); }
-  .card-num { font-size: 12px; color: var(--text3); font-weight: 600; width: 24px; flex-shrink: 0; padding-top: 11px; text-align: center; }
-  .card-fields { flex: 1; display: flex; flex-direction: column; gap: 7px; }
-  .card-field {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 7px; padding: 9px 11px; color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 13px; resize: none; outline: none; transition: border-color 0.12s; min-height: 40px;
-  }
-  .card-field:focus { border-color: var(--border2); }
-  .card-field::placeholder { color: var(--text3); }
-  .card-delete-btn {
-    background: transparent; border: none; color: var(--text3); cursor: pointer;
-    font-size: 14px; padding: 5px; border-radius: 5px; flex-shrink: 0; margin-top: 7px;
-  }
-  .card-delete-btn:hover { color: var(--wrong); background: var(--wrong-dim); }
+        .deck-item:last-child {
+            border-bottom: none;
+        }
 
-  /* STUDY VIEW */
-  .study-view { max-width: 600px; margin: 0 auto; }
-  .progress-wrap { background: var(--surface2); border-radius: 100px; height: 3px; margin-bottom: 22px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--text); border-radius: 100px; transition: width 0.35s cubic-bezier(.4,0,.2,1); }
-  .card-counter { text-align: center; font-size: 12px; color: var(--text3); margin-bottom: 18px; letter-spacing: 0.04em; }
-  .card-counter span { color: var(--text2); font-weight: 600; }
+        .deck-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 17px;
+        }
 
-  .flashcard-wrap { perspective: 1200px; margin-bottom: 24px; cursor: pointer; }
-  .flashcard-inner { position: relative; transition: transform 0.55s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; }
-  .flashcard-inner.flipped { transform: rotateY(180deg); }
-  .flashcard-face {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
-    padding: 44px 32px; min-height: 220px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-    backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  }
-  .flashcard-back {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    transform: rotateY(180deg);
-    border-color: var(--border2);
-  }
-  .card-hint { font-size: 10px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; }
-  .card-text { font-family: 'DM Serif Display', serif; font-size: 24px; line-height: 1.45; color: var(--text); }
-  .card-text-answer { font-size: 19px; line-height: 1.5; }
+        .deck-info i {
+            color: var(--text-secondary);
+        }
 
-  .study-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .answer-btn {
-    padding: 14px; border-radius: var(--radius); font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid;
-    transition: all 0.12s; display: flex; align-items: center; justify-content: center;
-  }
-  .btn-wrong { background: var(--wrong-dim); border-color: rgba(217,108,108,0.4); color: var(--wrong); }
-  .btn-wrong:hover { background: rgba(217,108,108,0.2); }
-  .btn-correct { background: var(--correct-dim); border-color: rgba(108,191,142,0.4); color: var(--correct); }
-  .btn-correct:hover { background: rgba(108,191,142,0.22); }
+        .deck-item > i {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
 
-  .study-nav { display: flex; gap: 8px; justify-content: center; }
+        /* Option buttons below elements */
+        .bottom-add-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 17px;
+            margin: 24px auto;
+            cursor: pointer;
+            display: block;
+            text-align: center;
+        }
 
-  /* SESSION COMPLETE */
-  .session-complete { text-align: center; padding: 48px 20px; max-width: 400px; margin: 0 auto; }
-  .session-title { font-family: 'DM Serif Display', serif; font-size: 30px; margin-bottom: 6px; }
-  .session-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
-  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 28px; }
-  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-  .result-num { font-family: 'DM Serif Display', serif; font-size: 26px; }
-  .result-label { font-size: 11px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .session-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        /* Action lists standard inside inner views */
+        .action-group {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
 
-  /* AUTH VIEW */
-  .auth-view {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 20px; background: var(--bg);
-  }
-  .auth-box {
-    width: 100%; max-width: 360px; background: var(--surface);
-    border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px;
-    box-shadow: var(--shadow);
-  }
-  .auth-logo { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 6px; }
-  .auth-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
-  .auth-tabs { display: flex; gap: 0; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
-  .auth-tab {
-    flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: background 0.12s, color 0.12s; color: var(--text3);
-    font-family: 'DM Sans', sans-serif; border: none; background: transparent;
-  }
-  .auth-tab.active { background: var(--surface2); color: var(--text); }
-  .auth-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-  .auth-input {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 11px 13px; color: var(--text);
-    font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
-    transition: border-color 0.12s;
-  }
-  .auth-input:focus { border-color: var(--border2); }
-  .auth-error { font-size: 12px; color: var(--wrong); min-height: 16px; }
-  .auth-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
-  .auth-divider-line { flex: 1; height: 1px; background: var(--border); }
-  .auth-divider-text { font-size: 11px; color: var(--text3); }
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            width: 100%;
+            text-align: left;
+            color: var(--text-color);
+            font-size: 17px;
+            cursor: pointer;
+        }
 
-  /* CONTEXT MENU */
-  .ctx-menu {
-    position: fixed; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 5px; min-width: 152px;
-    box-shadow: var(--shadow); z-index: 1000; display: none;
-    animation: fadeIn 0.1s ease;
-  }
-  .ctx-menu.open { display: block; }
-  .ctx-item {
-    padding: 7px 11px; border-radius: 5px; font-size: 13px; cursor: pointer;
-    display: flex; align-items: center; gap: 8px; color: var(--text);
-    transition: background 0.1s;
-  }
-  .ctx-item:hover { background: var(--surface2); }
-  .ctx-item.danger { color: var(--wrong); }
-  .ctx-item.danger:hover { background: var(--wrong-dim); }
-  .ctx-divider { height: 1px; background: var(--border); margin: 3px 0; }
+        .action-row:last-child {
+            border-bottom: none;
+        }
 
-  /* MODAL */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
-    z-index: 500; display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.18s;
-    padding: 20px;
-  }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
-    padding: 24px; width: 100%; max-width: 400px;
-    transform: translateY(16px); transition: transform 0.18s;
-    box-shadow: var(--shadow);
-  }
-  .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
-  .modal-input {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 11px 13px; color: var(--text);
-    font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
-    transition: border-color 0.12s; margin-bottom: 8px;
-  }
-  .modal-input:focus { border-color: var(--border2); }
-  .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+        .action-row span.count {
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-  /* EMPTY STATE */
-  .empty-state { text-align: center; padding: 56px 20px; color: var(--text2); }
-  .empty-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); margin-bottom: 7px; }
-  .empty-sub { font-size: 13px; line-height: 1.6; color: var(--text3); }
+        /* Destructive action styling */
+        .danger-text {
+            color: var(--incorrect-color) !important;
+            justify-content: center;
+        }
 
-  /* TOAST */
-  .toast {
-    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: var(--surface2); border: 1px solid var(--border2); border-radius: 100px;
-    padding: 9px 18px; font-size: 13px; font-weight: 500; z-index: 900;
-    transition: transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.28s;
-    opacity: 0; box-shadow: var(--shadow); white-space: nowrap;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        /* Study & Cards Display Viewports */
+        .card-viewport {
+            flex-grow: 1;
+            background-color: var(--surface-light);
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            margin: 20px 0;
+            min-height: 350px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
 
-  /* LOADING */
-  .loading-screen {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; align-items: center; justify-content: center; flex-direction: column;
-    z-index: 999; gap: 14px;
-  }
-  .loading-logo { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--text); }
-  .loading-dots { display: flex; gap: 5px; }
-  .loading-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); animation: pulse 1.2s ease-in-out infinite; }
-  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        .card-text {
+            font-size: 24px;
+            font-weight: 400;
+            line-height: 1.4;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
 
-  /* BREADCRUMB */
-  .breadcrumb { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 1px; }
-  .breadcrumb-link { cursor: pointer; transition: color 0.12s; }
-  .breadcrumb-link:hover { color: var(--text2); }
-  .breadcrumb-sep { color: var(--text3); }
-  .breadcrumb-current { color: var(--text2); }
+        .study-counter {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 500;
+        }
 
-  /* SYNC INDICATOR */
-  .sync-dot {
-    width: 6px; height: 6px; border-radius: 50%; background: var(--text3);
-    display: inline-block; margin-right: 5px; vertical-align: middle;
-    transition: background 0.3s;
-  }
-  .sync-dot.synced { background: var(--correct); }
-  .sync-dot.syncing { background: #e8b84b; animation: pulse 1s infinite; }
-  .sync-dot.error { background: var(--wrong); }
+        /* Control Bars for session interaction */
+        .bottom-action-bar {
+            margin-top: auto;
+            padding: 12px 0 24px 0;
+        }
 
-  /* OVERLAY — used on all devices when sidebar is open */
-  .sidebar-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 19;
-    pointer-events: none; opacity: 0; transition: opacity 0.25s; }
-  .sidebar-overlay.open { pointer-events: all; opacity: 1; }
+        .blue-action-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
 
-  @keyframes pulse { 0%,100%{opacity:0.25;transform:scale(0.8)} 50%{opacity:0.7;transform:scale(1)} }
-  @keyframes fadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+        .dual-action-bar {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+        }
 
-  /* RESPONSIVE */
-  @media (max-width: 768px) {
-    .sidebar-overlay { display: block; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
-    .sidebar-overlay.open { pointer-events: all; opacity: 1; }
-    .main-content { padding: 14px; }
-    .deck-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-    .flashcard-face { padding: 32px 22px; min-height: 190px; }
-    .card-text { font-size: 21px; }
-  }
-  @media (max-width: 430px) {
-    .stat-num { font-size: 24px; }
-    .deck-grid { grid-template-columns: 1fr 1fr; }
-    .flashcard-face { padding: 26px 18px; min-height: 170px; }
-    .card-text { font-size: 18px; }
-    .study-actions { gap: 8px; }
-    .answer-btn { padding: 13px; font-size: 13px; }
-    .main-header { padding: 11px 14px; }
-    .main-content { padding: 12px; }
-  }
-</style>
+        .rating-btn {
+            flex: 1;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            text-align: center;
+        }
+
+        .rating-btn.incorrect {
+            background-color: var(--incorrect-color);
+        }
+
+        .rating-btn.correct {
+            background-color: var(--correct-color);
+        }
+
+        /* Finished Summary screen */
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .result-stat {
+            font-size: 19px;
+            color: var(--text-color);
+        }
+
+        /* Dialogs / Modals Overlay Layouts */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-sheet {
+            background-color: var(--surface-color);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 540px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        /* Form Inputs matching native iOS look */
+        .form-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+            padding-left: 4px;
+        }
+
+        .form-input {
+            width: 100%;
+            background-color: var(--surface-light);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        /* Cards Row/Editor Listing Grid */
+        .editor-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            background-color: var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .editor-card-item {
+            background-color: var(--surface-color);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .editor-card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 16px;
+        }
+
+        .editor-card-answer {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .card-index-indicator {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Utilities */
+        .search-container {
+            position: relative;
+            width: 220px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--surface-light);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px 8px 32px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* Responsiveness modifications */
+        @media(max-width: 768px) {
+            h1 { font-size: 28px; }
+            .card-viewport { min-height: 280px; }
+            .search-container { width: 140px; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="loading-screen" id="loadingScreen">
-  <div class="loading-logo">FlashDeck</div>
-  <div class="loading-dots">
-    <div class="loading-dot"></div>
-    <div class="loading-dot"></div>
-    <div class="loading-dot"></div>
-  </div>
-</div>
+    <div class="app-container">
 
-<!-- AUTH SCREEN (shown before login) -->
-<div id="authScreen" style="display:none">
-  <div class="auth-view">
-    <div class="auth-box">
-      <div class="auth-logo">FlashDeck</div>
-      <div class="auth-sub">Sign in to sync across all your devices</div>
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
-        <button class="auth-tab" id="tabSignUp" onclick="switchAuthTab('signup')">Create Account</button>
-      </div>
-      <div class="auth-fields">
-        <input class="auth-input" id="authEmail" type="email" placeholder="Email address" autocomplete="email" onkeydown="if(event.key==='Enter')submitAuth()">
-        <input class="auth-input" id="authPassword" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()">
-        <div class="auth-error" id="authError"></div>
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
-      <div class="auth-divider"><div class="auth-divider-line"></div><div class="auth-divider-text">or</div><div class="auth-divider-line"></div></div>
-      <button class="btn btn-secondary" style="width:100%;justify-content:center;padding:11px" onclick="continueAnonymously()">Continue without account</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:12px">
-        No account = data stays on this device only
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="app" id="appRoot" style="display:none">
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">FlashDeck</div>
-      <div class="sidebar-actions">
-        <button class="add-btn" title="New…" onclick="openAddMenu(event)">+</button>
-      </div>
-    </div>
-    <div class="folder-list" id="folderList"></div>
-    <div style="padding:10px 12px;border-top:1px solid var(--border)">
-      <div id="authArea"></div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-    <div class="main-header">
-      <button class="icon-btn menu-btn" onclick="toggleSidebar()">&#9776;</button>
-      <div style="flex:1;min-width:0">
-        <div class="main-title" id="mainTitle">FlashDeck</div>
-        <div class="breadcrumb" id="breadcrumb"></div>
-      </div>
-      <div class="header-actions" id="headerActions"></div>
-    </div>
-    <div class="main-content" id="mainContent"></div>
-  </main>
-</div>
-
-<!-- CONTEXT MENU -->
-<div class="ctx-menu" id="ctxMenu"><div id="ctxItems"></div></div>
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalIfOuter(event)">
-  <div class="modal" id="modal">
-    <div class="modal-title" id="modalTitle"></div>
-    <div class="modal-sub" id="modalSub"></div>
-    <div id="modalBody"></div>
-    <div class="modal-actions" id="modalActions"></div>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc }
-  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import {
-  getAuth, signInAnonymously, onAuthStateChanged,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDk2Np8D7FkcTLLtR3sY0JRvRXrsi58ZDY",
-  authDomain: "tune-6a7b5.firebaseapp.com",
-  projectId: "tune-6a7b5",
-  storageBucket: "tune-6a7b5.firebasestorage.app",
-  messagingSenderId: "14662217624",
-  appId: "1:14662217624:web:54746870d24713bc9705ed",
-  measurementId: "G-9H0VMN285L"
-};
-
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
-const auth = getAuth(fbApp);
-
-// ── STATE ──────────────────────────────────────────────────────────────
-let state = {
-  uid: null,
-  isAnonymous: false,
-  folders: [],
-  decks: [],
-  // UI-only state (never saved to Firestore)
-  folderOpenState: {}, // { folderId: bool }
-  currentView: 'home',
-  currentDeckId: null,
-  currentCardIndex: 0,
-  cardFlipped: false,
-  sessionResults: { correct: 0, wrong: 0 },
-  studyCards: [],
-};
-
-// Real-time listener unsubscribe handle
-let unsubSnapshot = null;
-// Pending save debounce timer
-let saveTimer = null;
-// Current auth tab
-let authTab = 'signin';
-
-// ── AUTH SCREEN ────────────────────────────────────────────────────────
-window.switchAuthTab = function(tab) {
-  authTab = tab;
-  document.getElementById('tabSignIn').classList.toggle('active', tab === 'signin');
-  document.getElementById('tabSignUp').classList.toggle('active', tab === 'signup');
-  document.getElementById('authSubmitBtn').textContent = tab === 'signin' ? 'Sign In' : 'Create Account';
-  document.getElementById('authPassword').placeholder = tab === 'signin' ? 'Password' : 'Password (min 6 chars)';
-  document.getElementById('authError').textContent = '';
-};
-
-window.submitAuth = async function() {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  const errEl = document.getElementById('authError');
-  errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
-  const btn = document.getElementById('authSubmitBtn');
-  btn.textContent = '...';
-  btn.disabled = true;
-  try {
-    if (authTab === 'signup') {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-    }
-  } catch(e) {
-    btn.textContent = authTab === 'signin' ? 'Sign In' : 'Create Account';
-    btn.disabled = false;
-    errEl.textContent = friendlyAuthError(e.code);
-  }
-};
-
-window.continueAnonymously = async function() {
-  await signInAnonymously(auth);
-};
-
-function friendlyAuthError(code) {
-  const map = {
-    'auth/email-already-in-use': 'That email is already registered.',
-    'auth/invalid-email': 'Please enter a valid email address.',
-    'auth/weak-password': 'Password must be at least 6 characters.',
-    'auth/user-not-found': 'No account found with that email.',
-    'auth/wrong-password': 'Incorrect password.',
-    'auth/invalid-credential': 'Incorrect email or password.',
-    'auth/too-many-requests': 'Too many attempts. Please try again later.',
-    'auth/network-request-failed': 'Network error. Check your connection.',
-  };
-  return map[code] || 'Something went wrong. Please try again.';
-}
-
-// ── AUTH STATE ─────────────────────────────────────────────────────────
-onAuthStateChanged(auth, async user => {
-  document.getElementById('loadingScreen').style.display = 'none';
-
-  if (user) {
-    state.uid = user.uid;
-    state.isAnonymous = user.isAnonymous;
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('appRoot').style.display = 'flex';
-
-    // Set up auth area in sidebar
-    if (user.isAnonymous) {
-      document.getElementById('authArea').innerHTML = `
-        <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:6px">
-          Not syncing &mdash; local only
+        <div id="screen-home" class="screen active">
+            <header>
+                <div class="header-left">
+                    <button class="action-icon" id="auth-status-btn" onclick="openAuthModal()"><i class="fa-solid fa-user-circle"></i></button>
+                </div>
+                <div class="header-right">
+                    <button class="action-icon" onclick="openDeckModal(false)"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </header>
+            <h1>Decks</h1>
+            <div class="deck-list" id="decks-container">
+                </div>
+            <button class="bottom-add-btn" onclick="openDeckModal(false)">Add</button>
         </div>
-        <button class="btn btn-secondary" style="width:100%;justify-content:center;font-size:12px" onclick="showSignInPrompt()">
-          Sign in to sync
-        </button>`;
-    } else {
-      document.getElementById('authArea').innerHTML = `
-        <div style="display:flex;align-items:center;gap:7px;padding:4px 0">
-          <span class="sync-dot synced" id="syncDot"></span>
-          <span style="font-size:11px;color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${user.email}</span>
-          <button class="icon-btn" title="Sign out" onclick="doSignOut()" style="font-size:11px;width:auto;padding:0 7px">Out</button>
-        </div>`;
-    }
 
-    // Subscribe to real-time Firestore updates
-    subscribeToData();
-    // Open sidebar by default on larger screens
-    if (window.innerWidth > 768) {
-      document.getElementById('sidebar').classList.add('open');
-      // No overlay on initial open for desktop
-    }
-  } else {
-    // Not signed in — show auth screen
-    document.getElementById('authScreen').style.display = 'block';
-    document.getElementById('appRoot').style.display = 'none';
-    if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
-  }
-});
-
-window.doSignOut = async function() {
-  if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
-  await signOut(auth);
-  state = { uid: null, isAnonymous: false, folders: [], decks: [], folderOpenState: {}, currentView:'home', currentDeckId:null, currentCardIndex:0, cardFlipped:false, sessionResults:{correct:0,wrong:0}, studyCards:[] };
-  showToast('Signed out');
-};
-
-window.showSignInPrompt = function() {
-  openModal('Sign in to sync', 'Your data will sync across all devices.',
-    `<input class="modal-input" id="mEmail" type="email" placeholder="Email" autocomplete="email">
-     <input class="modal-input" id="mPass" type="password" placeholder="Password" autocomplete="current-password">
-     <div style="font-size:11px;color:var(--text3);margin-top:4px">Don't have an account? Enter a new email and password to create one.</div>
-     <div style="font-size:12px;color:var(--wrong);margin-top:6px" id="siErr"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="submitSignInPrompt()">Sign In / Sign Up</button>`);
-};
-
-window.submitSignInPrompt = async function() {
-  const email = document.getElementById('mEmail')?.value.trim();
-  const pass  = document.getElementById('mPass')?.value;
-  const errEl = document.getElementById('siErr');
-  if (!email || !pass) { errEl.textContent = 'Fill in both fields.'; return; }
-  try {
-    await signInWithEmailAndPassword(auth, email, pass);
-    closeModal();
-  } catch(e) {
-    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
-      try {
-        await createUserWithEmailAndPassword(auth, email, pass);
-        closeModal();
-      } catch(e2) { errEl.textContent = friendlyAuthError(e2.code); }
-    } else { errEl.textContent = friendlyAuthError(e.code); }
-  }
-};
-
-// ── REAL-TIME FIRESTORE ────────────────────────────────────────────────
-function subscribeToData() {
-  if (unsubSnapshot) unsubSnapshot();
-
-  unsubSnapshot = onSnapshot(doc(db, 'users', state.uid), snap => {
-    if (snap.exists()) {
-      const d = snap.data();
-      // Preserve UI-only open state — only update data fields
-      const prev = { folderOpenState: { ...state.folderOpenState } };
-      state.folders = (d.folders || []).map(f => {
-        // Strip any saved _open, use our local UI state instead
-        const { _open, ...clean } = f;
-        return clean;
-      });
-      state.decks = d.decks || [];
-      state.folderOpenState = prev.folderOpenState;
-    } else {
-      // First time user — seed with demo data
-      state.folders = [
-        {id: uid(), name: 'Biology', order: 0},
-        {id: uid(), name: 'History', order: 1},
-      ];
-      const f1 = state.folders[0].id, f2 = state.folders[1].id;
-      state.folderOpenState[f1] = true;
-      state.folderOpenState[f2] = true;
-      state.decks = [
-        {id: uid(), name: 'Cell Structure', folderId: f1, order: 0,
-          cards: [
-            {id: uid(), q:'What is the powerhouse of the cell?', a:'Mitochondria', wrongCount:2},
-            {id: uid(), q:'What controls what enters and exits the cell?', a:'Cell membrane', wrongCount:0},
-            {id: uid(), q:'Which organelle contains DNA?', a:'Nucleus', wrongCount:1},
-            {id: uid(), q:'What produces proteins?', a:'Ribosome', wrongCount:0},
-          ]
-        },
-        {id: uid(), name: 'Photosynthesis', folderId: f1, order: 1,
-          cards: [
-            {id: uid(), q:'What pigment captures sunlight?', a:'Chlorophyll', wrongCount:0},
-            {id: uid(), q:'What gas is released during photosynthesis?', a:'Oxygen', wrongCount:1},
-          ]
-        },
-        {id: uid(), name: 'WWI Causes', folderId: f2, order: 0,
-          cards: [
-            {id: uid(), q:'What was the main alliance opposing the Triple Entente?', a:'The Triple Alliance', wrongCount:3},
-            {id: uid(), q:'Assassination of which Archduke triggered WWI?', a:'Archduke Franz Ferdinand', wrongCount:0},
-          ]
-        },
-      ];
-      saveData();
-    }
-
-    // Re-render current view with updated data
-    renderSidebar();
-    if (state.currentView === 'home') showHome();
-    else if (state.currentView === 'deck' && state.currentDeckId) {
-      const deck = state.decks.find(d => d.id === state.currentDeckId);
-      if (deck) { /* preserve current sub-view without full navigation */ renderSidebar(); }
-      else showHome(); // deck was deleted on another device
-    }
-  }, err => {
-    console.error('Snapshot error', err);
-    setSyncStatus('error');
-  });
-}
-
-// ── SAVE (debounced) ───────────────────────────────────────────────────
-function setSyncStatus(status) {
-  const dot = document.getElementById('syncDot');
-  if (!dot) return;
-  dot.className = 'sync-dot ' + status;
-}
-
-async function saveData() {
-  clearTimeout(saveTimer);
-  setSyncStatus('syncing');
-  saveTimer = setTimeout(async () => {
-    try {
-      // Never save _open — it's UI state only
-      const cleanFolders = state.folders.map(({ _open, ...f }) => f);
-      await setDoc(doc(db, 'users', state.uid), {
-        folders: cleanFolders,
-        decks: state.decks,
-        updatedAt: Date.now()
-      });
-      setSyncStatus('synced');
-    } catch(e) {
-      console.error(e);
-      setSyncStatus('error');
-      showToast('Sync error — check connection');
-    }
-  }, 600); // 600ms debounce — batches rapid edits
-}
-
-function uid() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
-
-// ── SIDEBAR ────────────────────────────────────────────────────────────
-function renderSidebar() {
-  const list = document.getElementById('folderList');
-  const sorted = [...state.folders].sort((a,b) => a.order - b.order);
-  list.innerHTML = '';
-
-  if (!sorted.length) {
-    list.innerHTML = `<div style="padding:18px;text-align:center;color:var(--text3);font-size:13px">No folders yet.</div>`;
-    return;
-  }
-
-  sorted.forEach(folder => {
-    const folderDecks = state.decks.filter(d => d.folderId === folder.id).sort((a,b) => a.order - b.order);
-    const hasWrong = folderDecks.some(d => d.cards.some(c => c.wrongCount > 0));
-    // Use local UI state for open/closed; default to open
-    const isOpen = state.folderOpenState[folder.id] !== false;
-    const wrongCount = folderDecks.reduce((s,d)=>s+d.cards.filter(c=>c.wrongCount>0).length, 0);
-
-    const item = document.createElement('div');
-    item.className = 'folder-item';
-    item.dataset.folderId = folder.id;
-
-    item.innerHTML = `
-      <div class="folder-header" onclick="toggleFolder('${folder.id}')">
-        <span class="folder-chevron ${isOpen?'open':''}" id="chev-${folder.id}">&#9658;</span>
-        <span class="folder-name">${esc(folder.name)}</span>
-        <span class="folder-meta">${folderDecks.length}</span>
-        <span class="folder-dots" onclick="openFolderMenu(event,'${folder.id}')">&#8943;</span>
-      </div>
-      <div class="deck-list" id="dl-${folder.id}" style="display:${isOpen?'block':'none'}">
-        ${folderDecks.map(deck => {
-          const isActive = state.currentDeckId === deck.id;
-          return `
-            <div class="deck-item ${isActive?'active':''}" id="di-${deck.id}" onclick="selectDeck('${deck.id}')">
-              <span class="deck-name">${esc(deck.name)}</span>
-              <span class="deck-count">${deck.cards.length}</span>
-              <span class="deck-dots" onclick="openDeckMenu(event,'${deck.id}')">&#8943;</span>
-            </div>`;
-        }).join('')}
-        ${hasWrong ? `
-          <div class="deck-item review-deck-item" onclick="studyWrongDeck('${folder.id}')">
-            <span class="deck-name" style="color:var(--text3);font-size:12px">Review incorrect &middot; ${wrongCount}</span>
-          </div>` : ''}
-      </div>`;
-    list.appendChild(item);
-  });
-}
-
-function toggleFolder(id) {
-  // Only update local UI state — never writes to Firestore
-  state.folderOpenState[id] = state.folderOpenState[id] === false ? true : false;
-  const dl = document.getElementById('dl-'+id);
-  const chev = document.getElementById('chev-'+id);
-  const isOpen = state.folderOpenState[id] !== false;
-  if (dl) dl.style.display = isOpen ? 'block' : 'none';
-  if (chev) chev.classList.toggle('open', isOpen);
-}
-
-// ── HOME ───────────────────────────────────────────────────────────────
-function showHome() {
-  state.currentView = 'home';
-  state.currentDeckId = null;
-  document.getElementById('mainTitle').textContent = 'FlashDeck';
-  document.getElementById('breadcrumb').innerHTML = '';
-  document.getElementById('headerActions').innerHTML = `
-    <button class="btn btn-secondary" onclick="openNewFolderModal()">+ Folder</button>
-    <button class="btn btn-primary" onclick="openNewDeckModal()">+ Deck</button>`;
-
-  const totalWrong = state.decks.reduce((s,d)=>s+d.cards.filter(c=>c.wrongCount>0).length, 0);
-
-  let reviewSection = '';
-  const wrongDecks = state.decks.filter(d => d.cards.some(c=>c.wrongCount>0));
-  if (wrongDecks.length) {
-    const pills = wrongDecks.map(d => {
-      const w = d.cards.filter(c=>c.wrongCount>0).length;
-      return `<div class="review-pill" onclick="studyDeckById('${d.id}',true)">${esc(d.name)} <strong>${w}</strong></div>`;
-    }).join('');
-    reviewSection = `<div class="review-section"><div class="review-section-title">To Review</div><div class="review-pills">${pills}</div></div>`;
-  }
-
-  const sorted = [...state.folders].sort((a,b)=>a.order-b.order);
-  const folderSections = sorted.map(folder => {
-    const decks = state.decks.filter(d=>d.folderId===folder.id).sort((a,b)=>a.order-b.order);
-    if (!decks.length) return '';
-    const cards = decks.map(deck => {
-      const w = deck.cards.filter(c=>c.wrongCount>0).length;
-      return `
-        <div class="deck-card" onclick="selectDeck('${deck.id}')">
-          <div class="deck-card-name">${esc(deck.name)}</div>
-          <div class="deck-card-meta">${deck.cards.length} cards</div>
-          ${w ? `<div class="deck-card-review">${w} to review</div>` : ''}
-        </div>`;
-    }).join('');
-    return `<div style="margin-bottom:24px">
-      <div class="section-label">${esc(folder.name)}</div>
-      <div class="deck-grid">${cards}</div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('mainContent').innerHTML = `
-    <div>
-      ${reviewSection}
-      ${folderSections || `<div class="empty-state"><div class="empty-title">No decks yet</div><div class="empty-sub">Create a folder, then add a deck to get started.</div></div>`}
-    </div>`;
-
-  renderSidebar();
-  closeSidebar();
-}
-
-// ── SELECT DECK ────────────────────────────────────────────────────────
-function selectDeck(deckId) {
-  const deck = state.decks.find(d=>d.id===deckId);
-  if (!deck) return;
-  state.currentDeckId = deckId;
-  state.currentView = 'deck';
-  const folder = state.folders.find(f=>f.id===deck.folderId);
-
-  document.getElementById('mainTitle').textContent = deck.name;
-  document.getElementById('breadcrumb').innerHTML = `
-    <span class="breadcrumb-link" onclick="showHome()">Home</span>
-    <span class="breadcrumb-sep">&#8250;</span>
-    <span class="breadcrumb-link" onclick="showHome()">${esc(folder?.name||'')}</span>
-    <span class="breadcrumb-sep">&#8250;</span>
-    <span class="breadcrumb-current">${esc(deck.name)}</span>`;
-
-  document.getElementById('headerActions').innerHTML = `
-    <button class="btn btn-secondary" id="btn-view" onclick="showDeckCards()">Cards</button>
-    <button class="btn btn-secondary" id="btn-edit" onclick="showEditDeck()">Edit</button>
-    <button class="btn btn-primary" onclick="startStudy('${deckId}',false)">Study</button>`;
-
-  showDeckCards();
-  renderSidebar();
-  closeSidebar();
-}
-
-// ── DECK CARDS VIEW ────────────────────────────────────────────────────
-function showDeckCards() {
-  setHeaderActive('btn-view');
-  const deck = state.decks.find(d=>d.id===state.currentDeckId);
-  if (!deck) return;
-
-  document.getElementById('mainContent').innerHTML = `
-    <div style="max-width:580px;margin:0 auto">
-      <div class="deck-card-list">
-        ${deck.cards.map((c,i) => `
-          <div class="deck-card-row">
-            <div class="dcr-num">${i+1}</div>
-            <div class="dcr-body">
-              <div class="dcr-q">${esc(c.q)}</div>
-              <div class="dcr-a">${esc(c.a)}</div>
-              ${c.wrongCount > 0 ? `<div class="dcr-review">${c.wrongCount}x incorrect</div>` : ''}
+        <div id="screen-deck-detail" class="screen">
+            <header>
+                <div class="header-left">
+                    <button class="back-btn" onclick="navigateTo('home')"><i class="fa-solid fa-chevron-left"></i> Decks</button>
+                </div>
+                <div class="header-right"></div>
+            </header>
+            <h1 id="detail-deck-title">Deck Title</h1>
+            
+            <div class="action-group">
+                <button class="action-row" onclick="openDeckModal(true)">
+                    <span>Edit deck</span>
+                    <span class="count"><i class="fa-solid fa-chevron-right"></i></span>
+                </button>
+                <button class="action-row" onclick="openCardEditorView()">
+                    <span>Edit cards</span>
+                    <span class="count"><i class="fa-solid fa-chevron-right"></i></span>
+                </button>
             </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-}
 
-// ── EDIT DECK VIEW ─────────────────────────────────────────────────────
-function showEditDeck() {
-  setHeaderActive('btn-edit');
-  const deck = state.decks.find(d=>d.id===state.currentDeckId);
-  if (!deck) return;
-
-  document.getElementById('mainContent').innerHTML = `
-    <div style="max-width:580px;margin:0 auto">
-      <div class="edit-toolbar">
-        <button class="btn btn-secondary" onclick="addCard()">+ Add Card</button>
-        <button class="btn btn-primary" onclick="saveDeckEdits()">Save</button>
-        <button class="btn btn-danger" onclick="confirmDeleteDeck('${deck.id}')">Delete Deck</button>
-      </div>
-      <div class="card-list-edit" id="editCardList">
-        ${deck.cards.map((c,i) => `
-          <div class="card-edit-item" data-card-id="${c.id}">
-            <div class="card-num">${i+1}</div>
-            <div class="card-fields">
-              <textarea class="card-field" placeholder="Question" data-type="q" data-id="${c.id}" rows="2">${esc(c.q)}</textarea>
-              <textarea class="card-field" placeholder="Answer" data-type="a" data-id="${c.id}" rows="2">${esc(c.a)}</textarea>
+            <div class="action-group">
+                <button class="action-row" onclick="startStudySession('all')">
+                    <span>Study all cards</span>
+                    <span class="count" id="detail-card-count">0 cards <i class="fa-solid fa-chevron-right"></i></span>
+                </button>
             </div>
-            <button class="card-delete-btn" onclick="deleteCard('${c.id}')">&#10005;</button>
-          </div>`).join('')}
-      </div>
-    </div>`;
-
-  document.querySelectorAll('.card-field').forEach(ta => {
-    ta.style.height = ta.scrollHeight + 'px';
-    ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
-  });
-}
-
-function setHeaderActive(activeId) {
-  ['btn-view','btn-edit'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.className = id === activeId ? 'btn btn-primary' : 'btn btn-secondary';
-  });
-}
-
-function addCard() {
-  const deck = state.decks.find(d=>d.id===state.currentDeckId);
-  if (!deck) return;
-  deck.cards.push({id: uid(), q:'', a:'', wrongCount:0});
-  showEditDeck();
-  const items = document.querySelectorAll('.card-edit-item');
-  if (items.length) items[items.length-1].scrollIntoView({behavior:'smooth'});
-}
-
-function deleteCard(cardId) {
-  const deck = state.decks.find(d=>d.id===state.currentDeckId);
-  if (!deck) return;
-  if (deck.cards.length <= 1) { showToast('Need at least 1 card'); return; }
-  deck.cards = deck.cards.filter(c=>c.id!==cardId);
-  showEditDeck();
-}
-
-function saveDeckEdits() {
-  const deck = state.decks.find(d=>d.id===state.currentDeckId);
-  if (!deck) return;
-  document.querySelectorAll('.card-edit-item').forEach(item => {
-    const card = deck.cards.find(c=>c.id===item.dataset.cardId);
-    if (!card) return;
-    const qEl = item.querySelector('[data-type="q"]');
-    const aEl = item.querySelector('[data-type="a"]');
-    if (qEl) card.q = qEl.value.trim();
-    if (aEl) card.a = aEl.value.trim();
-  });
-  deck.cards = deck.cards.filter(c=>c.q||c.a);
-  saveData().then(() => { showToast('Saved'); showDeckCards(); });
-}
-
-// ── STUDY ──────────────────────────────────────────────────────────────
-function startStudy(deckId, wrongOnly) {
-  const deck = state.decks.find(d=>d.id===deckId);
-  if (!deck) return;
-  let cards = wrongOnly ? deck.cards.filter(c=>c.wrongCount>0) : [...deck.cards];
-  if (!cards.length) { showToast('No cards to study'); return; }
-  for (let i=cards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]]; }
-  state.studyCards = cards;
-  state.currentCardIndex = 0;
-  state.cardFlipped = false;
-  state.sessionResults = {correct:0, wrong:0};
-  state.currentDeckId = deckId;
-  state.currentView = 'study';
-  renderStudyCard();
-}
-
-function studyDeckById(id, wrongOnly) {
-  selectDeck(id);
-  setTimeout(() => startStudy(id, wrongOnly), 50);
-}
-
-function studyWrongDeck(folderId) {
-  const folder = state.folders.find(f=>f.id===folderId);
-  const folderDecks = state.decks.filter(d=>d.folderId===folderId);
-  let wrongCards = [];
-  folderDecks.forEach(deck => {
-    deck.cards.filter(c=>c.wrongCount>0).forEach(c => wrongCards.push({...c, _deckId:deck.id}));
-  });
-  if (!wrongCards.length) { showToast('No incorrect cards'); return; }
-  for (let i=wrongCards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[wrongCards[i],wrongCards[j]]=[wrongCards[j],wrongCards[i]]; }
-  state.studyCards = wrongCards;
-  state.currentCardIndex = 0;
-  state.cardFlipped = false;
-  state.sessionResults = {correct:0, wrong:0};
-  state.currentView = 'study';
-  document.getElementById('mainTitle').textContent = folder?.name ? folder.name + ' — Review' : 'Review';
-  document.getElementById('breadcrumb').innerHTML = '';
-  document.getElementById('headerActions').innerHTML = `<button class="btn btn-secondary" onclick="showHome()">Exit</button>`;
-  renderStudyCard();
-}
-
-function renderStudyCard() {
-  const total = state.studyCards.length;
-  const i = state.currentCardIndex;
-  if (i >= total) { showSessionComplete(); return; }
-  const card = state.studyCards[i];
-  const pct = (i / total) * 100;
-
-  const hdrActions = document.getElementById('headerActions');
-  if (!hdrActions.innerHTML.includes('Exit')) {
-    hdrActions.innerHTML = `<button class="btn btn-secondary" onclick="exitStudy()">Exit</button>`;
-  }
-
-  document.getElementById('mainContent').innerHTML = `
-    <div class="study-view">
-      <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div class="card-counter">Card <span>${i+1}</span> of <span>${total}</span></div>
-      <div class="flashcard-wrap" onclick="flipCard()">
-        <div class="flashcard-inner ${state.cardFlipped?'flipped':''}" id="flashcardInner">
-          <div class="flashcard-face">
-            <div class="card-hint">Question &mdash; tap to reveal</div>
-            <div class="card-text">${esc(card.q)}</div>
-          </div>
-          <div class="flashcard-face flashcard-back">
-            <div class="card-hint">Answer</div>
-            <div class="card-text card-text-answer">${esc(card.a)}</div>
-          </div>
         </div>
-      </div>
-      ${state.cardFlipped ? `
-        <div class="study-actions">
-          <button class="answer-btn btn-wrong" onclick="markCard(false)">Incorrect</button>
-          <button class="answer-btn btn-correct" onclick="markCard(true)">Correct</button>
-        </div>` : `
-        <div style="text-align:center;color:var(--text3);font-size:12px;letter-spacing:0.04em">Tap card to reveal answer</div>`}
-      <div class="study-nav" style="margin-top:14px">
-        <button class="btn btn-secondary" onclick="skipCard()">Skip</button>
-        ${i > 0 ? `<button class="btn btn-secondary" onclick="prevCard()">Back</button>` : ''}
-      </div>
-    </div>`;
-}
 
-function flipCard() {
-  state.cardFlipped = !state.cardFlipped;
-  renderStudyCard();
-}
+        <div id="screen-study" class="screen">
+            <header>
+                <div class="header-left">
+                    <button class="back-btn" id="study-back-btn" onclick="exitStudySession()"><i class="fa-solid fa-chevron-left"></i> Details</button>
+                </div>
+                <div class="header-right">
+                    <div class="study-counter" id="study-progress-counter">0/0</div>
+                </div>
+            </header>
 
-function markCard(correct) {
-  const card = state.studyCards[state.currentCardIndex];
-  const realCard = findRealCard(card.id, card._deckId || state.currentDeckId);
-  if (realCard) {
-    if (!correct) {
-      realCard.wrongCount = (realCard.wrongCount||0) + 1;
-    } else {
-      if (realCard.wrongCount > 0) realCard.wrongCount--;
-    }
-  }
-  correct ? state.sessionResults.correct++ : state.sessionResults.wrong++;
-  state.currentCardIndex++;
-  state.cardFlipped = false;
-  saveData();
-  renderStudyCard();
-}
+            <div class="card-viewport" onclick="flipStudyCard()">
+                <div class="card-text" id="study-card-text">Card Text Window</div>
+            </div>
 
-function skipCard() {
-  state.currentCardIndex++;
-  state.cardFlipped = false;
-  renderStudyCard();
-}
-
-function prevCard() {
-  if (state.currentCardIndex > 0) {
-    state.currentCardIndex--;
-    state.cardFlipped = false;
-    renderStudyCard();
-  }
-}
-
-function exitStudy() {
-  if (state.currentDeckId) selectDeck(state.currentDeckId);
-  else showHome();
-}
-
-function findRealCard(cardId, deckId) {
-  if (deckId) {
-    const deck = state.decks.find(d=>d.id===deckId);
-    if (deck) { const c = deck.cards.find(c=>c.id===cardId); if (c) return c; }
-  }
-  for (const deck of state.decks) {
-    const c = deck.cards.find(c=>c.id===cardId);
-    if (c) return c;
-  }
-  return null;
-}
-
-function showSessionComplete() {
-  state.currentView = 'session_complete';
-  const {correct, wrong} = state.sessionResults;
-  const total = correct + wrong;
-  const pct = total ? Math.round(correct/total*100) : 0;
-
-  document.getElementById('mainContent').innerHTML = `
-    <div class="session-complete">
-      <div class="session-title">${pct >= 80 ? 'Well done' : pct >= 50 ? 'Good effort' : 'Keep going'}</div>
-      <div class="session-sub">${pct}% correct this session</div>
-      <div class="result-grid">
-        <div class="result-card">
-          <div class="result-num" style="color:var(--correct)">${correct}</div>
-          <div class="result-label">Correct</div>
+            <div class="bottom-action-bar">
+                <button class="blue-action-btn" id="reveal-btn" onclick="flipStudyCard()">Reveal</button>
+                <div class="dual-action-bar" id="rating-controls" style="display: none;">
+                    <button class="rating-btn incorrect" onclick="handleCardRating(false)">Incorrect</button>
+                    <button class="rating-btn correct" onclick="handleCardRating(true)">Correct</button>
+                </div>
+            </div>
         </div>
-        <div class="result-card">
-          <div class="result-num" style="color:var(--wrong)">${wrong}</div>
-          <div class="result-label">Incorrect</div>
+
+        <div id="screen-results" class="screen">
+            <div class="results-container">
+                <div class="results-title">Done</div>
+                <div class="result-stat">Correct: <span id="res-correct">0</span></div>
+                <div class="result-stat">Incorrect: <span id="res-incorrect">0</span></div>
+                <div class="result-stat">Skipped: <span id="res-skipped">0</span></div>
+            </div>
+            <div class="bottom-action-bar">
+                <button class="blue-action-btn" onclick="navigateTo('home')">Done</button>
+            </div>
         </div>
-      </div>
-      <div class="session-actions">
-        <button class="btn btn-primary" onclick="startStudy('${state.currentDeckId}',false)">Study Again</button>
-        ${wrong > 0 ? `<button class="btn btn-secondary" onclick="startStudy('${state.currentDeckId}',true)">Review Incorrect (${wrong})</button>` : ''}
-        <button class="btn btn-secondary" onclick="showHome()">Home</button>
-      </div>
-    </div>`;
-}
 
-// ── ADD MENU (sidebar + button) ────────────────────────────────────────
-function openAddMenu(e) {
-  e.stopPropagation();
-  showCtxMenu(e, [
-    {label: 'New Folder', action: () => openNewFolderModal()},
-    {label: 'New Deck',   action: () => openNewDeckModal()},
-  ]);
-}
+        <div id="screen-cards-list" class="screen">
+            <header>
+                <div class="header-left">
+                    <button class="back-btn" onclick="navigateTo('deck-detail')"><i class="fa-solid fa-chevron-left"></i> <span id="cards-list-back-title">Deck</span></button>
+                </div>
+                <div class="header-right">
+                    <div class="search-container">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" class="search-input" id="card-search" placeholder="Search cards..." oninput="renderEditorCards()">
+                    </div>
+                    <button class="action-icon" onclick="openCardModal(false)"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </header>
+            <h1>Edit cards</h1>
+            <div class="editor-card-list" id="editor-cards-container">
+                </div>
+        </div>
 
-// ── CONTEXT MENUS ──────────────────────────────────────────────────────
-function openFolderMenu(e, folderId) {
-  e.stopPropagation();
-  showCtxMenu(e, [
-    {label:'Rename', action:()=>renameFolder(folderId)},
-    {label:'Add Deck', action:()=>openNewDeckModal(folderId)},
-    {divider:true},
-    {label:'Move Up', action:()=>moveFolderUp(folderId)},
-    {label:'Move Down', action:()=>moveFolderDown(folderId)},
-    {divider:true},
-    {label:'Delete Folder', danger:true, action:()=>confirmDeleteFolder(folderId)},
-  ]);
-}
+    </div>
 
-function openDeckMenu(e, deckId) {
-  e.stopPropagation();
-  showCtxMenu(e, [
-    {label:'Study', action:()=>{ selectDeck(deckId); startStudy(deckId,false); }},
-    {label:'Rename', action:()=>renameDeck(deckId)},
-    {label:'Move to Folder', action:()=>moveDeckToFolder(deckId)},
-    {divider:true},
-    {label:'Move Up', action:()=>moveDeckUp(deckId)},
-    {label:'Move Down', action:()=>moveDeckDown(deckId)},
-    {divider:true},
-    {label:'Delete Deck', danger:true, action:()=>confirmDeleteDeck(deckId)},
-  ]);
-}
+    <div class="modal-overlay" id="modal-auth">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 id="auth-modal-title">Account Sign In</h3>
+                <button class="back-btn" onclick="closeAuthModal()">Cancel</button>
+            </div>
+            <div class="modal-body">
+                <div id="auth-logged-out-form">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="auth-email" class="form-input" placeholder="name@example.com">
+                    
+                    <label class="form-label">Password</label>
+                    <input type="password" id="auth-password" class="form-input" placeholder="••••••••">
+                    
+                    <button class="blue-action-btn" style="margin-bottom: 12px;" onclick="handleEmailAuth('signin')">Sign In</button>
+                    <button class="bottom-add-btn" style="margin: 0 auto;" onclick="handleEmailAuth('signup')">Create Cloud Account</button>
+                </div>
+                <div id="auth-logged-in-profile" style="display: none;">
+                    <p style="margin-bottom: 20px; text-align: center; color: var(--text-secondary);" id="user-display-email"></p>
+                    <button class="blue-action-btn" onclick="handleSignOut()">Sign Out & Clear Local Device View</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-let ctxClose = null;
-function showCtxMenu(e, items) {
-  const menu = document.getElementById('ctxMenu');
-  const ctxItems = document.getElementById('ctxItems');
-  ctxItems.innerHTML = items.map((item,i) => {
-    if (item.divider) return `<div class="ctx-divider"></div>`;
-    return `<div class="ctx-item ${item.danger?'danger':''}" data-idx="${i}">${item.label}</div>`;
-  }).join('');
-  menu.querySelectorAll('.ctx-item').forEach(el => {
-    const idx = parseInt(el.dataset.idx);
-    if (!isNaN(idx) && items[idx]?.action) el.addEventListener('click', ()=>{ hideCtxMenu(); items[idx].action(); });
-  });
-  menu.style.left = Math.min(e.clientX, window.innerWidth-165)+'px';
-  menu.style.top  = Math.min(e.clientY, window.innerHeight-items.length*34-16)+'px';
-  menu.classList.add('open');
-  if (ctxClose) document.removeEventListener('click', ctxClose);
-  ctxClose = () => hideCtxMenu();
-  setTimeout(() => document.addEventListener('click', ctxClose), 10);
-}
-function hideCtxMenu() { document.getElementById('ctxMenu').classList.remove('open'); }
+    <div class="modal-overlay" id="modal-deck">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 id="deck-modal-title">Add deck</h3>
+                <button class="back-btn" onclick="closeDeckModal()">Cancel</button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Name</label>
+                <input type="text" id="deck-name-input" class="form-input" placeholder="Enter deck name">
+                
+                <div id="deck-edit-actions" style="display: none;" class="action-group">
+                    <button class="action-row danger-text" onclick="handleDeleteDeck()">Remove this deck</button>
+                </div>
 
-// ── MODALS ─────────────────────────────────────────────────────────────
-function openModal(title, sub, bodyHtml, actions) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalSub').textContent = sub || '';
-  document.getElementById('modalBody').innerHTML = bodyHtml || '';
-  document.getElementById('modalActions').innerHTML = actions || '';
-  document.getElementById('modalOverlay').classList.add('open');
-  setTimeout(() => { const inp = document.querySelector('#modalBody .modal-input'); if (inp) inp.focus(); }, 100);
-}
-function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-function closeModalIfOuter(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+                <button class="blue-action-btn" id="deck-save-btn" onclick="handleSaveDeck()">Save</button>
+            </div>
+        </div>
+    </div>
 
-function openNewFolderModal() {
-  openModal('New Folder', '',
-    `<input class="modal-input" id="mInput" placeholder="Folder name" maxlength="40" onkeydown="if(event.key==='Enter')submitNewFolder()">`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="submitNewFolder()">Create</button>`);
-}
-function submitNewFolder() {
-  const val = document.getElementById('mInput')?.value.trim();
-  if (!val) return;
-  const newFolder = {id: uid(), name: val, order: state.folders.length};
-  state.folders.push(newFolder);
-  state.folderOpenState[newFolder.id] = true;
-  saveData(); closeModal(); renderSidebar();
-}
+    <div class="modal-overlay" id="modal-card">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 id="card-modal-title">Add card</h3>
+                <button class="back-btn" onclick="closeCardModal()">Cancel</button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Front Text</label>
+                <textarea id="card-front-input" class="form-input" rows="3" placeholder="Enter front text" style="resize: none; font-family: inherit;"></textarea>
+                
+                <label class="form-label">Back Text</label>
+                <textarea id="card-back-input" class="form-input" rows="3" placeholder="Enter back text" style="resize: none; font-family: inherit;"></textarea>
+                
+                <div id="card-edit-actions" style="display: none;" class="action-group">
+                    <button class="action-row danger-text" onclick="handleDeleteCard()">Delete Card</button>
+                </div>
 
-function openNewDeckModal(folderId) {
-  const opts = state.folders.map(f=>`<option value="${f.id}" ${f.id===folderId?'selected':''}>${esc(f.name)}</option>`).join('');
-  openModal('New Deck', '',
-    `<input class="modal-input" id="mInput" placeholder="Deck name" maxlength="50" onkeydown="if(event.key==='Enter')submitNewDeck()">
-     <select class="modal-input" id="mFolder" style="cursor:pointer">
-       ${opts || '<option value="">Create a folder first</option>'}
-     </select>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="submitNewDeck()">Create</button>`);
-}
-function submitNewDeck() {
-  const name = document.getElementById('mInput')?.value.trim();
-  const fId  = document.getElementById('mFolder')?.value;
-  if (!name || !fId) { showToast('Fill in all fields'); return; }
-  const deck = {id:uid(), name, folderId:fId, order:state.decks.filter(d=>d.folderId===fId).length,
-    cards:[{id:uid(),q:'Question',a:'Answer',wrongCount:0}]};
-  state.decks.push(deck);
-  saveData(); closeModal(); renderSidebar(); selectDeck(deck.id); showEditDeck();
-}
+                <button class="blue-action-btn" id="card-save-btn" onclick="handleSaveCard()">Save</button>
+            </div>
+        </div>
+    </div>
 
-function renameFolder(id) {
-  const folder = state.folders.find(f=>f.id===id);
-  openModal('Rename Folder', '',
-    `<input class="modal-input" id="mInput" value="${esc(folder.name)}" maxlength="40" onkeydown="if(event.key==='Enter')submitRenameFolder('${id}')">`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="submitRenameFolder('${id}')">Rename</button>`);
-}
-function submitRenameFolder(id) {
-  const val = document.getElementById('mInput')?.value.trim();
-  if (!val) return;
-  state.folders.find(f=>f.id===id).name = val;
-  saveData(); closeModal(); renderSidebar(); if (state.currentView==='home') showHome();
-}
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-function renameDeck(id) {
-  const deck = state.decks.find(d=>d.id===id);
-  openModal('Rename Deck', '',
-    `<input class="modal-input" id="mInput" value="${esc(deck.name)}" maxlength="50" onkeydown="if(event.key==='Enter')submitRenameDeck('${id}')">`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="submitRenameDeck('${id}')">Rename</button>`);
-}
-function submitRenameDeck(id) {
-  const val = document.getElementById('mInput')?.value.trim();
-  if (!val) return;
-  state.decks.find(d=>d.id===id).name = val;
-  saveData(); closeModal(); renderSidebar();
-  if (state.currentDeckId===id) document.getElementById('mainTitle').textContent = val;
-}
+        // Provided Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDk2Np8D7FkcTLLtR3sY0JRvRXrsi58ZDY",
+            authDomain: "tune-6a7b5.firebaseapp.com",
+            projectId: "tune-6a7b5",
+            storageBucket: "tune-6a7b5.firebasestorage.app",
+            messagingSenderId: "14662217624",
+            appId: "1:14662217624:web:54746870d24713bc9705ed",
+            measurementId: "G-9H0VMN285L"
+        };
 
-function moveDeckToFolder(deckId) {
-  const deck = state.decks.find(d=>d.id===deckId);
-  const opts = state.folders.map(f=>`<option value="${f.id}" ${f.id===deck.folderId?'selected':''}>${esc(f.name)}</option>`).join('');
-  openModal('Move Deck', `"${esc(deck.name)}"`,
-    `<select class="modal-input" id="mFolder" style="cursor:pointer">${opts}</select>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="submitMoveDeck('${deckId}')">Move</button>`);
-}
-function submitMoveDeck(deckId) {
-  const fId = document.getElementById('mFolder')?.value;
-  const deck = state.decks.find(d=>d.id===deckId);
-  deck.folderId = fId;
-  deck.order = state.decks.filter(d=>d.folderId===fId&&d.id!==deckId).length;
-  saveData(); closeModal(); renderSidebar(); showToast('Moved');
-}
+        // Initialization
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-function confirmDeleteFolder(id) {
-  const folder = state.folders.find(f=>f.id===id);
-  const n = state.decks.filter(d=>d.folderId===id).length;
-  openModal('Delete Folder', `"${folder.name}" and its ${n} deck(s) will be removed.`, '',
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="deleteFolder('${id}')">Delete</button>`);
-}
-function deleteFolder(id) {
-  state.folders = state.folders.filter(f=>f.id!==id);
-  state.decks   = state.decks.filter(d=>d.folderId!==id);
-  delete state.folderOpenState[id];
-  saveData(); closeModal(); renderSidebar(); showHome();
-}
+        // Core Reactive Application State Engine
+        let state = {
+            user: null,
+            decks: [],
+            activeDeckId: null,
+            activeCardId: null,
+            isEditing: false,
+            studySession: {
+                cards: [],
+                currentIndex: 0,
+                correctCount: 0,
+                incorrectCount: 0,
+                skippedCount: 0,
+                isRevealed: false
+            }
+        };
 
-function confirmDeleteDeck(id) {
-  const deck = state.decks.find(d=>d.id===id);
-  openModal('Delete Deck', `"${deck.name}" will be permanently removed.`, '',
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="deleteDeck('${id}')">Delete</button>`);
-}
-function deleteDeck(id) {
-  state.decks = state.decks.filter(d=>d.id!==id);
-  saveData(); closeModal(); renderSidebar(); showHome();
-}
+        // Local Fallback Mock Data matching context screenshots if clean database instance
+        const defaultLocalData = [
+            {
+                id: "deck-bio2",
+                name: "Biology 2",
+                cards: [
+                    { id: "c1", front: "Is light intensity an abiotic or biotic factor ?", back: "Abiotic factor" },
+                    { id: "c2", front: "Is pH of a soil and abiotic or a biotic factor?", back: "Abiotic factor" },
+                    { id: "c3", front: "Are predators abiotic or biotic factors?", back: "Biotic factor" },
+                    { id: "c4", front: "Is food a abiotic or biotic factor?", back: "Biotic factor" },
+                    { id: "c5", front: "All the living organisms and the place where they live is called ...", back: "An ecosystem" },
+                    { id: "c6", front: "One person is Aa and another person is AA for a gene. Describe their phenotypes and genotypes.", back: "They have the same phenotype but different genotypes for this characteristic" },
+                    { id: "c7", front: "State two ways biomass is lost in a food chain?", back: "Egestion   Respiration   (Not growth)" },
+                    { id: "c8", front: "What is ecotourism?", back: "Tourism directed towards exotic, often threatened, natural environments, intended to support conservation efforts and observe wildlife." }
+                ]
+            },
+            { id: "deck-chem2", name: "Chemistry 2", cards: [] },
+            { id: "deck-geo2", name: "Geography 2", cards: [] },
+            { id: "deck-maths", name: "Maths", cards: [] },
+            { id: "deck-phys1", name: "Physics 1", cards: [] },
+            { id: "deck-phys2", name: "Physics 2", cards: [] }
+        ];
 
-// ── REORDER ────────────────────────────────────────────────────────────
-function moveFolderUp(id) {
-  const sorted = [...state.folders].sort((a,b)=>a.order-b.order);
-  const idx = sorted.findIndex(f=>f.id===id);
-  if (idx<=0) return;
-  [sorted[idx-1].order, sorted[idx].order] = [sorted[idx].order, sorted[idx-1].order];
-  saveData(); renderSidebar();
-}
-function moveFolderDown(id) {
-  const sorted = [...state.folders].sort((a,b)=>a.order-b.order);
-  const idx = sorted.findIndex(f=>f.id===id);
-  if (idx>=sorted.length-1) return;
-  [sorted[idx+1].order, sorted[idx].order] = [sorted[idx].order, sorted[idx+1].order];
-  saveData(); renderSidebar();
-}
-function moveDeckUp(id) {
-  const deck = state.decks.find(d=>d.id===id);
-  const peers = state.decks.filter(d=>d.folderId===deck.folderId).sort((a,b)=>a.order-b.order);
-  const idx = peers.findIndex(d=>d.id===id);
-  if (idx<=0) return;
-  [peers[idx-1].order, peers[idx].order] = [peers[idx].order, peers[idx-1].order];
-  saveData(); renderSidebar();
-}
-function moveDeckDown(id) {
-  const deck = state.decks.find(d=>d.id===id);
-  const peers = state.decks.filter(d=>d.folderId===deck.folderId).sort((a,b)=>a.order-b.order);
-  const idx = peers.findIndex(d=>d.id===id);
-  if (idx>=peers.length-1) return;
-  [peers[idx+1].order, peers[idx].order] = [peers[idx].order, peers[idx+1].order];
-  saveData(); renderSidebar();
-}
+        // Global Bindings for procedural inline UI handlers
+        window.navigateTo = navigateTo;
+        window.openAuthModal = openAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.handleEmailAuth = handleEmailAuth;
+        window.handleSignOut = handleSignOut;
+        window.openDeckModal = openDeckModal;
+        window.closeDeckModal = closeDeckModal;
+        window.handleSaveDeck = handleSaveDeck;
+        window.handleDeleteDeck = handleDeleteDeck;
+        window.openCardEditorView = openCardEditorView;
+        window.openCardModal = openCardModal;
+        window.closeCardModal = closeCardModal;
+        window.handleSaveCard = handleSaveCard;
+        window.handleDeleteCard = handleDeleteCard;
+        window.startStudySession = startStudySession;
+        window.flipStudyCard = flipStudyCard;
+        window.handleCardRating = handleCardRating;
+        window.exitStudySession = exitStudySession;
+        window.renderEditorCards = renderEditorCards;
 
-// ── TOAST ──────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
-}
+        // Auth Observability Sync Loop
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                state.user = user;
+                document.getElementById('auth-status-btn').style.color = "var(--correct-color)";
+                document.getElementById('auth-logged-out-form').style.display = 'none';
+                document.getElementById('auth-logged-in-profile').style.display = 'block';
+                document.getElementById('user-display-email').innerText = `Logged in as:\n${user.email}`;
+                await pullUserDataCloud();
+            } else {
+                state.user = null;
+                document.getElementById('auth-status-btn').style.color = "var(--accent-color)";
+                document.getElementById('auth-logged-out-form').style.display = 'block';
+                document.getElementById('auth-logged-in-profile').style.display = 'none';
+                loadLocalStorageFallback();
+            }
+            renderDecks();
+        });
 
-// ── SIDEBAR TOGGLE — works on all devices ─────────────────────────────
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-  const isOpen = sidebar.classList.toggle('open');
-  overlay.classList.toggle('open', isOpen);
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('open');
-}
-function openSidebar() {
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebarOverlay').classList.add('open');
-}
+        // Cloud IO Operations
+        async function pushUserDataCloud() {
+            if (!state.user) return;
+            try {
+                await setDoc(doc(db, "users", state.user.uid), { decks: state.decks });
+            } catch (err) {
+                console.error("Cloud synchronization error:", err);
+            }
+        }
 
-// ── KEYBOARD ───────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (state.currentView !== 'study') return;
-  if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); flipCard(); }
-  if (e.key === 'ArrowRight') skipCard();
-  if (e.key === 'ArrowLeft') prevCard();
-  if (state.cardFlipped) {
-    if (e.key === '1' || e.key === 'ArrowDown') markCard(false);
-    if (e.key === '2' || e.key === 'Enter')     markCard(true);
-  }
-});
+        async function pullUserDataCloud() {
+            if (!state.user) return;
+            try {
+                const docSnap = await getDoc(doc(db, "users", state.user.uid));
+                if (docSnap.exists() && docSnap.data().decks) {
+                    state.decks = docSnap.data().decks;
+                } else {
+                    loadLocalStorageFallback();
+                    await pushUserDataCloud();
+                }
+            } catch (err) {
+                console.error("Cloud retrieval failure:", err);
+            }
+        }
 
-// ── HELPERS ────────────────────────────────────────────────────────────
-function esc(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+        function loadLocalStorageFallback() {
+            const local = localStorage.getItem('flashcards_decks');
+            if (local) {
+                state.decks = JSON.parse(local);
+            } else {
+                state.decks = defaultLocalData;
+                saveData();
+            }
+        }
 
-// ── EXPOSE GLOBALS ─────────────────────────────────────────────────────
-Object.assign(window, {
-  showHome, selectDeck, showDeckCards, showEditDeck,
-  addCard, deleteCard, saveDeckEdits,
-  startStudy, studyDeckById, studyWrongDeck,
-  flipCard, markCard, skipCard, prevCard, exitStudy,
-  openFolderMenu, openDeckMenu,
-  openNewFolderModal, openNewDeckModal, submitNewFolder, submitNewDeck,
-  renameFolder, submitRenameFolder, renameDeck, submitRenameDeck,
-  moveDeckToFolder, submitMoveDeck,
-  confirmDeleteFolder, deleteFolder, confirmDeleteDeck, deleteDeck,
-  closeModal, closeModalIfOuter,
-  toggleFolder, toggleSidebar, closeSidebar, openSidebar,
-  moveFolderUp, moveFolderDown, moveDeckUp, moveDeckDown,
-  switchAuthTab, submitAuth, continueAnonymously,
-  showSignInPrompt, submitSignInPrompt, doSignOut,
-  openAddMenu,
-});
-</script>
+        function saveData() {
+            if (state.user) {
+                pushUserDataCloud();
+            } else {
+                localStorage.setItem('flashcards_decks', JSON.stringify(state.decks));
+            }
+        }
+
+        // Navigation Framework
+        function navigateTo(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            
+            if(screenId === 'home') {
+                renderDecks();
+            } else if (screenId === 'deck-detail') {
+                const deck = state.decks.find(d => d.id === state.activeDeckId);
+                if(deck) {
+                    document.getElementById('detail-deck-title').innerText = deck.name;
+                    document.getElementById('detail-card-count').innerHTML = `${deck.cards.length} cards <i class="fa-solid fa-chevron-right"></i>`;
+                }
+            }
+        }
+
+        // Authentication Methods
+        function openAuthModal() { document.getElementById('modal-auth').classList.add('active'); }
+        function closeAuthModal() { document.getElementById('modal-auth').classList.remove('active'); }
+
+        async function handleEmailAuth(mode) {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if(!email || !password) return alert("Please enter both an email and password.");
+
+            try {
+                if (mode === 'signin') {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+                closeAuthModal();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+                closeAuthModal();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // Home View Deck Renderer
+        function renderDecks() {
+            const container = document.getElementById('decks-container');
+            container.innerHTML = '';
+            state.decks.forEach(deck => {
+                const row = document.createElement('div');
+                row.className = 'deck-item';
+                row.onclick = () => {
+                    state.activeDeckId = deck.id;
+                    navigateTo('deck-detail');
+                };
+                row.innerHTML = `
+                    <div class="deck-info">
+                        <i class="fa-regular fa-folder"></i>
+                        <span>${deck.name}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right"></i>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Deck Modifier Logic
+        function openDeckModal(isEditing = false) {
+            state.isEditing = isEditing;
+            const titleEl = document.getElementById('deck-modal-title');
+            const inputEl = document.getElementById('deck-name-input');
+            const deleteGroup = document.getElementById('deck-edit-actions');
+            
+            if (isEditing) {
+                titleEl.innerText = "Edit deck";
+                const deck = state.decks.find(d => d.id === state.activeDeckId);
+                inputEl.value = deck ? deck.name : '';
+                deleteGroup.style.display = 'block';
+            } else {
+                titleEl.innerText = "Add deck";
+                inputEl.value = '';
+                deleteGroup.style.display = 'none';
+            }
+            document.getElementById('modal-deck').classList.add('active');
+        }
+
+        function closeDeckModal() { document.getElementById('modal-deck').classList.remove('active'); }
+
+        function handleSaveDeck() {
+            const name = document.getElementById('deck-name-input').value.trim();
+            if(!name) return;
+
+            if (state.isEditing) {
+                state.decks = state.decks.map(d => d.id === state.activeDeckId ? { ...d, name } : d);
+            } else {
+                const newDeck = { id: 'deck-' + Date.now(), name, cards: [] };
+                state.decks.push(newDeck);
+                state.activeDeckId = newDeck.id;
+            }
+            saveData();
+            closeDeckModal();
+            navigateTo(state.isEditing ? 'deck-detail' : 'home');
+        }
+
+        function handleDeleteDeck() {
+            if(confirm("Are you sure you want to delete this deck?")) {
+                state.decks = state.decks.filter(d => d.id !== state.activeDeckId);
+                saveData();
+                closeDeckModal();
+                navigateTo('home');
+            }
+        }
+
+        // Card Sub-Editor Interface List Logic
+        function openCardEditorView() {
+            const deck = state.decks.find(d => d.id === state.activeDeckId);
+            document.getElementById('cards-list-back-title').innerText = deck ? deck.name : 'Back';
+            document.getElementById('card-search').value = '';
+            navigateTo('cards-list');
+            renderEditorCards();
+        }
+
+        function renderEditorCards() {
+            const container = document.getElementById('editor-cards-container');
+            container.innerHTML = '';
+            const deck = state.decks.find(d => d.id === state.activeDeckId);
+            if (!deck) return;
+
+            const query = document.getElementById('card-search').value.toLowerCase();
+            const filteredCards = deck.cards.filter(c => 
+                c.front.toLowerCase().includes(query) || c.back.toLowerCase().includes(query)
+            );
+
+            filteredCards.forEach((card, idx) => {
+                const row = document.createElement('div');
+                row.className = 'editor-card-item';
+                row.onclick = () => openCardModal(true, card.id);
+                row.innerHTML = `
+                    <div class="editor-card-content">
+                        <div>${card.front}</div>
+                        <div class="editor-card-answer">~<br>${card.back}</div>
+                    </div>
+                    <div class="card-index-indicator">${idx + 1}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Card Creator/Editor Form Sheet Details
+        function openCardModal(isEditing = false, cardId = null) {
+            state.isEditing = isEditing;
+            state.activeCardId = cardId;
+            
+            const titleEl = document.getElementById('card-modal-title');
+            const frontIn = document.getElementById('card-front-input');
+            const backIn = document.getElementById('card-back-input');
+            const deleteGroup = document.getElementById('card-edit-actions');
+
+            if (isEditing) {
+                titleEl.innerText = "Edit card";
+                const deck = state.decks.find(d => d.id === state.activeDeckId);
+                const card = deck.cards.find(c => c.id === cardId);
+                frontIn.value = card ? card.front : '';
+                backIn.value = card ? card.back : '';
+                deleteGroup.style.display = 'block';
+            } else {
+                titleEl.innerText = "Add card";
+                frontIn.value = '';
+                backIn.value = '';
+                deleteGroup.style.display = 'none';
+            }
+            document.getElementById('modal-card').classList.add('active');
+        }
+
+        function closeCardModal() { document.getElementById('modal-card').classList.remove('active'); }
+
+        function handleSaveCard() {
+            const front = document.getElementById('card-front-input').value.trim();
+            const back = document.getElementById('card-back-input').value.trim();
+            if(!front || !back) return;
+
+            const deckIdx = state.decks.findIndex(d => d.id === state.activeDeckId);
+            if(deckIdx === -1) return;
+
+            if (state.isEditing) {
+                state.decks[deckIdx].cards = state.decks[deckIdx].cards.map(c => 
+                    c.id === state.activeCardId ? { ...c, front, back } : c
+                );
+            } else {
+                state.decks[deckIdx].cards.push({ id: 'card-' + Date.now(), front, back });
+            }
+
+            saveData();
+            closeCardModal();
+            renderEditorCards();
+        }
+
+        function handleDeleteCard() {
+            const deckIdx = state.decks.findIndex(d => d.id === state.activeDeckId);
+            if(deckIdx !== -1) {
+                state.decks[deckIdx].cards = state.decks[deckIdx].cards.filter(c => c.id !== state.activeCardId);
+                saveData();
+                closeCardModal();
+                renderEditorCards();
+            }
+        }
+
+        // Active Workflow Study Session Controller
+        function startStudySession(type) {
+            const deck = state.decks.find(d => d.id === state.activeDeckId);
+            if(!deck || deck.cards.length === 0) return alert("This deck has no cards to study yet.");
+
+            state.studySession = {
+                cards: [...deck.cards], // Linear progression sequence requested natively
+                currentIndex: 0,
+                correctCount: 0,
+                incorrectCount: 0,
+                skippedCount: 0,
+                isRevealed: false
+            };
+
+            navigateTo('study');
+            updateStudyCardUI();
+        }
+
+        function updateStudyCardUI() {
+            const session = state.studySession;
+            if(session.currentIndex >= session.cards.length) {
+                // Completed workflow path redirection
+                document.getElementById('res-correct').innerText = session.correctCount;
+                document.getElementById('res-incorrect').innerText = session.incorrectCount;
+                document.getElementById('res-skipped').innerText = session.skippedCount;
+                navigateTo('results');
+                return;
+            }
+
+            const currentCard = session.cards[session.currentIndex];
+            document.getElementById('study-progress-counter').innerText = `${session.currentIndex + 1}/${session.cards.length}`;
+            
+            if(session.isRevealed) {
+                document.getElementById('study-card-text').innerText = currentCard.back;
+                document.getElementById('reveal-btn').style.display = 'none';
+                document.getElementById('rating-controls').style.display = 'flex';
+            } else {
+                document.getElementById('study-card-text').innerText = currentCard.front;
+                document.getElementById('reveal-btn').style.display = 'block';
+                document.getElementById('rating-controls').style.display = 'none';
+            }
+        }
+
+        function flipStudyCard() {
+            if(!state.studySession.isRevealed) {
+                state.studySession.isRevealed = true;
+                updateStudyCardUI();
+            }
+        }
+
+        function handleCardRating(isCorrect) {
+            if(isCorrect) {
+                state.studySession.correctCount++;
+            } else {
+                state.studySession.incorrectCount++;
+            }
+            state.studySession.currentIndex++;
+            state.studySession.isRevealed = false;
+            updateStudyCardUI();
+        }
+
+        function exitStudySession() {
+            const session = state.studySession;
+            const remaining = session.cards.length - session.currentIndex;
+            state.studySession.skippedCount += remaining;
+            
+            document.getElementById('res-correct').innerText = session.correctCount;
+            document.getElementById('res-incorrect').innerText = session.incorrectCount;
+            document.getElementById('res-skipped').innerText = state.studySession.skippedCount;
+            navigateTo('results');
+        }
+    </script>
 </body>
 </html>
