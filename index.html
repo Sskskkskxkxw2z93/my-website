@@ -55,6 +55,15 @@
     transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
   .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+  .add-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+    background: transparent; color: var(--text2); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 18px; font-weight: 300;
+    line-height: 1; font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  .add-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); transform: rotate(90deg); }
 
   /* FOLDER LIST */
   .folder-list { flex: 1; overflow-y: auto; padding: 10px 8px; }
@@ -68,7 +77,6 @@
     transition: background 0.12s;
   }
   .folder-header:hover { background: var(--surface2); }
-  .folder-icon-text { font-size: 11px; color: var(--text3); flex-shrink: 0; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .folder-name { font-size: 13px; font-weight: 500; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .folder-meta { font-size: 11px; color: var(--text3); flex-shrink: 0; }
   .folder-chevron { font-size: 9px; color: var(--text3); flex-shrink: 0; transition: transform 0.18s; }
@@ -158,7 +166,7 @@
   .review-pill:hover { background: var(--surface3); color: var(--text); }
   .review-pill strong { color: var(--wrong); }
 
-  /* DECK VIEW — simple card list */
+  /* DECK VIEW */
   .deck-card-list { display: flex; flex-direction: column; gap: 8px; }
   .deck-card-row {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -243,6 +251,38 @@
   .result-label { font-size: 11px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
   .session-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 
+  /* AUTH VIEW */
+  .auth-view {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; background: var(--bg);
+  }
+  .auth-box {
+    width: 100%; max-width: 360px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px;
+    box-shadow: var(--shadow);
+  }
+  .auth-logo { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 6px; }
+  .auth-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+  .auth-tabs { display: flex; gap: 0; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+  .auth-tab {
+    flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background 0.12s, color 0.12s; color: var(--text3);
+    font-family: 'DM Sans', sans-serif; border: none; background: transparent;
+  }
+  .auth-tab.active { background: var(--surface2); color: var(--text); }
+  .auth-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .auth-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 11px 13px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
+    transition: border-color 0.12s;
+  }
+  .auth-input:focus { border-color: var(--border2); }
+  .auth-error { font-size: 12px; color: var(--wrong); min-height: 16px; }
+  .auth-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+  .auth-divider-line { flex: 1; height: 1px; background: var(--border); }
+  .auth-divider-text { font-size: 11px; color: var(--text3); }
+
   /* CONTEXT MENU */
   .ctx-menu {
     position: fixed; background: var(--surface); border: 1px solid var(--border);
@@ -321,6 +361,16 @@
   .breadcrumb-sep { color: var(--text3); }
   .breadcrumb-current { color: var(--text2); }
 
+  /* SYNC INDICATOR */
+  .sync-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--text3);
+    display: inline-block; margin-right: 5px; vertical-align: middle;
+    transition: background 0.3s;
+  }
+  .sync-dot.synced { background: var(--correct); }
+  .sync-dot.syncing { background: #e8b84b; animation: pulse 1s infinite; }
+  .sync-dot.error { background: var(--wrong); }
+
   /* MOBILE OVERLAY */
   .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9; }
 
@@ -366,6 +416,31 @@
   </div>
 </div>
 
+<!-- AUTH SCREEN (shown before login) -->
+<div id="authScreen" style="display:none">
+  <div class="auth-view">
+    <div class="auth-box">
+      <div class="auth-logo">FlashDeck</div>
+      <div class="auth-sub">Sign in to sync across all your devices</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
+        <button class="auth-tab" id="tabSignUp" onclick="switchAuthTab('signup')">Create Account</button>
+      </div>
+      <div class="auth-fields">
+        <input class="auth-input" id="authEmail" type="email" placeholder="Email address" autocomplete="email" onkeydown="if(event.key==='Enter')submitAuth()">
+        <input class="auth-input" id="authPassword" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()">
+        <div class="auth-error" id="authError"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
+      <div class="auth-divider"><div class="auth-divider-line"></div><div class="auth-divider-text">or</div><div class="auth-divider-line"></div></div>
+      <button class="btn btn-secondary" style="width:100%;justify-content:center;padding:11px" onclick="continueAnonymously()">Continue without account</button>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:12px">
+        No account = data stays on this device only
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="app" id="appRoot" style="display:none">
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
@@ -374,8 +449,7 @@
     <div class="sidebar-header">
       <div class="logo">FlashDeck</div>
       <div class="sidebar-actions">
-        <button class="icon-btn" title="New Folder" onclick="openNewFolderModal()">+ Folder</button>
-        <button class="icon-btn" title="New Deck" onclick="openNewDeckModal()">+ Deck</button>
+        <button class="add-btn" title="New…" onclick="openAddMenu(event)">+</button>
       </div>
     </div>
     <div class="folder-list" id="folderList"></div>
@@ -416,10 +490,12 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc }
+import { getFirestore, doc, onSnapshot, setDoc }
   from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDk2Np8D7FkcTLLtR3sY0JRvRXrsi58ZDY",
@@ -438,8 +514,11 @@ const auth = getAuth(fbApp);
 // ── STATE ──────────────────────────────────────────────────────────────
 let state = {
   uid: null,
+  isAnonymous: false,
   folders: [],
   decks: [],
+  // UI-only state (never saved to Firestore)
+  folderOpenState: {}, // { folderId: bool }
   currentView: 'home',
   currentDeckId: null,
   currentCardIndex: 0,
@@ -448,36 +527,161 @@ let state = {
   studyCards: [],
 };
 
-// ── AUTH ───────────────────────────────────────────────────────────────
+// Real-time listener unsubscribe handle
+let unsubSnapshot = null;
+// Pending save debounce timer
+let saveTimer = null;
+// Current auth tab
+let authTab = 'signin';
+
+// ── AUTH SCREEN ────────────────────────────────────────────────────────
+window.switchAuthTab = function(tab) {
+  authTab = tab;
+  document.getElementById('tabSignIn').classList.toggle('active', tab === 'signin');
+  document.getElementById('tabSignUp').classList.toggle('active', tab === 'signup');
+  document.getElementById('authSubmitBtn').textContent = tab === 'signin' ? 'Sign In' : 'Create Account';
+  document.getElementById('authPassword').placeholder = tab === 'signin' ? 'Password' : 'Password (min 6 chars)';
+  document.getElementById('authError').textContent = '';
+};
+
+window.submitAuth = async function() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
+  const btn = document.getElementById('authSubmitBtn');
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    if (authTab === 'signup') {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+  } catch(e) {
+    btn.textContent = authTab === 'signin' ? 'Sign In' : 'Create Account';
+    btn.disabled = false;
+    errEl.textContent = friendlyAuthError(e.code);
+  }
+};
+
+window.continueAnonymously = async function() {
+  await signInAnonymously(auth);
+};
+
+function friendlyAuthError(code) {
+  const map = {
+    'auth/email-already-in-use': 'That email is already registered.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/user-not-found': 'No account found with that email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Incorrect email or password.',
+    'auth/too-many-requests': 'Too many attempts. Please try again later.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+  };
+  return map[code] || 'Something went wrong. Please try again.';
+}
+
+// ── AUTH STATE ─────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async user => {
+  document.getElementById('loadingScreen').style.display = 'none';
+
   if (user) {
     state.uid = user.uid;
-    document.getElementById('authArea').innerHTML =
-      `<div style="font-size:11px;color:var(--text3);text-align:center">Synced &middot; ${user.uid.slice(0,8)}&hellip;</div>`;
-    await loadData();
-    document.getElementById('loadingScreen').style.display = 'none';
+    state.isAnonymous = user.isAnonymous;
+    document.getElementById('authScreen').style.display = 'none';
     document.getElementById('appRoot').style.display = 'flex';
-    renderSidebar();
-    showHome();
+
+    // Set up auth area in sidebar
+    if (user.isAnonymous) {
+      document.getElementById('authArea').innerHTML = `
+        <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:6px">
+          Not syncing &mdash; local only
+        </div>
+        <button class="btn btn-secondary" style="width:100%;justify-content:center;font-size:12px" onclick="showSignInPrompt()">
+          Sign in to sync
+        </button>`;
+    } else {
+      document.getElementById('authArea').innerHTML = `
+        <div style="display:flex;align-items:center;gap:7px;padding:4px 0">
+          <span class="sync-dot synced" id="syncDot"></span>
+          <span style="font-size:11px;color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${user.email}</span>
+          <button class="icon-btn" title="Sign out" onclick="doSignOut()" style="font-size:11px;width:auto;padding:0 7px">Out</button>
+        </div>`;
+    }
+
+    // Subscribe to real-time Firestore updates
+    subscribeToData();
   } else {
-    await signInAnonymously(auth);
+    // Not signed in — show auth screen
+    document.getElementById('authScreen').style.display = 'block';
+    document.getElementById('appRoot').style.display = 'none';
+    if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
   }
 });
 
-// ── FIRESTORE ──────────────────────────────────────────────────────────
-async function loadData() {
+window.doSignOut = async function() {
+  if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+  await signOut(auth);
+  state = { uid: null, isAnonymous: false, folders: [], decks: [], folderOpenState: {}, currentView:'home', currentDeckId:null, currentCardIndex:0, cardFlipped:false, sessionResults:{correct:0,wrong:0}, studyCards:[] };
+  showToast('Signed out');
+};
+
+window.showSignInPrompt = function() {
+  openModal('Sign in to sync', 'Your data will sync across all devices.',
+    `<input class="modal-input" id="mEmail" type="email" placeholder="Email" autocomplete="email">
+     <input class="modal-input" id="mPass" type="password" placeholder="Password" autocomplete="current-password">
+     <div style="font-size:11px;color:var(--text3);margin-top:4px">Don't have an account? Enter a new email and password to create one.</div>
+     <div style="font-size:12px;color:var(--wrong);margin-top:6px" id="siErr"></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="submitSignInPrompt()">Sign In / Sign Up</button>`);
+};
+
+window.submitSignInPrompt = async function() {
+  const email = document.getElementById('mEmail')?.value.trim();
+  const pass  = document.getElementById('mPass')?.value;
+  const errEl = document.getElementById('siErr');
+  if (!email || !pass) { errEl.textContent = 'Fill in both fields.'; return; }
   try {
-    const snap = await getDoc(doc(db, 'users', state.uid));
+    await signInWithEmailAndPassword(auth, email, pass);
+    closeModal();
+  } catch(e) {
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+        closeModal();
+      } catch(e2) { errEl.textContent = friendlyAuthError(e2.code); }
+    } else { errEl.textContent = friendlyAuthError(e.code); }
+  }
+};
+
+// ── REAL-TIME FIRESTORE ────────────────────────────────────────────────
+function subscribeToData() {
+  if (unsubSnapshot) unsubSnapshot();
+
+  unsubSnapshot = onSnapshot(doc(db, 'users', state.uid), snap => {
     if (snap.exists()) {
       const d = snap.data();
-      state.folders = d.folders || [];
-      state.decks   = d.decks   || [];
+      // Preserve UI-only open state — only update data fields
+      const prev = { folderOpenState: { ...state.folderOpenState } };
+      state.folders = (d.folders || []).map(f => {
+        // Strip any saved _open, use our local UI state instead
+        const { _open, ...clean } = f;
+        return clean;
+      });
+      state.decks = d.decks || [];
+      state.folderOpenState = prev.folderOpenState;
     } else {
+      // First time user — seed with demo data
       state.folders = [
         {id: uid(), name: 'Biology', order: 0},
         {id: uid(), name: 'History', order: 1},
       ];
       const f1 = state.folders[0].id, f2 = state.folders[1].id;
+      state.folderOpenState[f1] = true;
+      state.folderOpenState[f2] = true;
       state.decks = [
         {id: uid(), name: 'Cell Structure', folderId: f1, order: 0,
           cards: [
@@ -500,19 +704,49 @@ async function loadData() {
           ]
         },
       ];
-      await saveData();
+      saveData();
     }
-  } catch(e) { console.error(e); showToast('Could not load data'); }
+
+    // Re-render current view with updated data
+    renderSidebar();
+    if (state.currentView === 'home') showHome();
+    else if (state.currentView === 'deck' && state.currentDeckId) {
+      const deck = state.decks.find(d => d.id === state.currentDeckId);
+      if (deck) { /* preserve current sub-view without full navigation */ renderSidebar(); }
+      else showHome(); // deck was deleted on another device
+    }
+  }, err => {
+    console.error('Snapshot error', err);
+    setSyncStatus('error');
+  });
+}
+
+// ── SAVE (debounced) ───────────────────────────────────────────────────
+function setSyncStatus(status) {
+  const dot = document.getElementById('syncDot');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + status;
 }
 
 async function saveData() {
-  try {
-    await setDoc(doc(db, 'users', state.uid), {
-      folders: state.folders,
-      decks: state.decks,
-      updatedAt: Date.now()
-    });
-  } catch(e) { console.error(e); showToast('Sync error'); }
+  clearTimeout(saveTimer);
+  setSyncStatus('syncing');
+  saveTimer = setTimeout(async () => {
+    try {
+      // Never save _open — it's UI state only
+      const cleanFolders = state.folders.map(({ _open, ...f }) => f);
+      await setDoc(doc(db, 'users', state.uid), {
+        folders: cleanFolders,
+        decks: state.decks,
+        updatedAt: Date.now()
+      });
+      setSyncStatus('synced');
+    } catch(e) {
+      console.error(e);
+      setSyncStatus('error');
+      showToast('Sync error — check connection');
+    }
+  }, 600); // 600ms debounce — batches rapid edits
 }
 
 function uid() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
@@ -531,7 +765,8 @@ function renderSidebar() {
   sorted.forEach(folder => {
     const folderDecks = state.decks.filter(d => d.folderId === folder.id).sort((a,b) => a.order - b.order);
     const hasWrong = folderDecks.some(d => d.cards.some(c => c.wrongCount > 0));
-    const isOpen = folder._open !== false;
+    // Use local UI state for open/closed; default to open
+    const isOpen = state.folderOpenState[folder.id] !== false;
     const wrongCount = folderDecks.reduce((s,d)=>s+d.cards.filter(c=>c.wrongCount>0).length, 0);
 
     const item = document.createElement('div');
@@ -565,13 +800,13 @@ function renderSidebar() {
 }
 
 function toggleFolder(id) {
-  const folder = state.folders.find(f => f.id === id);
-  if (!folder) return;
-  folder._open = folder._open === false ? true : false;
+  // Only update local UI state — never writes to Firestore
+  state.folderOpenState[id] = state.folderOpenState[id] === false ? true : false;
   const dl = document.getElementById('dl-'+id);
   const chev = document.getElementById('chev-'+id);
-  if (dl) dl.style.display = folder._open === false ? 'none' : 'block';
-  if (chev) chev.classList.toggle('open', folder._open !== false);
+  const isOpen = state.folderOpenState[id] !== false;
+  if (dl) dl.style.display = isOpen ? 'block' : 'none';
+  if (chev) chev.classList.toggle('open', isOpen);
 }
 
 // ── HOME ───────────────────────────────────────────────────────────────
@@ -584,11 +819,8 @@ function showHome() {
     <button class="btn btn-secondary" onclick="openNewFolderModal()">+ Folder</button>
     <button class="btn btn-primary" onclick="openNewDeckModal()">+ Deck</button>`;
 
-  const totalCards = state.decks.reduce((s,d)=>s+d.cards.length, 0);
-  const totalDecks = state.decks.length;
   const totalWrong = state.decks.reduce((s,d)=>s+d.cards.filter(c=>c.wrongCount>0).length, 0);
 
-  // Review section
   let reviewSection = '';
   const wrongDecks = state.decks.filter(d => d.cards.some(c=>c.wrongCount>0));
   if (wrongDecks.length) {
@@ -599,7 +831,6 @@ function showHome() {
     reviewSection = `<div class="review-section"><div class="review-section-title">To Review</div><div class="review-pills">${pills}</div></div>`;
   }
 
-  // Folder sections
   const sorted = [...state.folders].sort((a,b)=>a.order-b.order);
   const folderSections = sorted.map(folder => {
     const decks = state.decks.filter(d=>d.folderId===folder.id).sort((a,b)=>a.order-b.order);
@@ -621,11 +852,6 @@ function showHome() {
 
   document.getElementById('mainContent').innerHTML = `
     <div>
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num">${totalDecks}</div><div class="stat-label">Decks</div></div>
-        <div class="stat-card"><div class="stat-num">${totalCards}</div><div class="stat-label">Cards</div></div>
-        <div class="stat-card"><div class="stat-num" style="color:var(--wrong)">${totalWrong}</div><div class="stat-label">Review</div></div>
-      </div>
       ${reviewSection}
       ${folderSections || `<div class="empty-state"><div class="empty-title">No decks yet</div><div class="empty-sub">Create a folder, then add a deck to get started.</div></div>`}
     </div>`;
@@ -917,6 +1143,15 @@ function showSessionComplete() {
     </div>`;
 }
 
+// ── ADD MENU (sidebar + button) ────────────────────────────────────────
+function openAddMenu(e) {
+  e.stopPropagation();
+  showCtxMenu(e, [
+    {label: 'New Folder', action: () => openNewFolderModal()},
+    {label: 'New Deck',   action: () => openNewDeckModal()},
+  ]);
+}
+
 // ── CONTEXT MENUS ──────────────────────────────────────────────────────
 function openFolderMenu(e, folderId) {
   e.stopPropagation();
@@ -987,7 +1222,9 @@ function openNewFolderModal() {
 function submitNewFolder() {
   const val = document.getElementById('mInput')?.value.trim();
   if (!val) return;
-  state.folders.push({id: uid(), name: val, order: state.folders.length, _open: true});
+  const newFolder = {id: uid(), name: val, order: state.folders.length};
+  state.folders.push(newFolder);
+  state.folderOpenState[newFolder.id] = true;
   saveData(); closeModal(); renderSidebar();
 }
 
@@ -1066,6 +1303,7 @@ function confirmDeleteFolder(id) {
 function deleteFolder(id) {
   state.folders = state.folders.filter(f=>f.id!==id);
   state.decks   = state.decks.filter(d=>d.folderId!==id);
+  delete state.folderOpenState[id];
   saveData(); closeModal(); renderSidebar(); showHome();
 }
 
@@ -1166,6 +1404,9 @@ Object.assign(window, {
   closeModal, closeModalIfOuter,
   toggleFolder, toggleSidebar, closeSidebar,
   moveFolderUp, moveFolderDown, moveDeckUp, moveDeckDown,
+  switchAuthTab, submitAuth, continueAnonymously,
+  showSignInPrompt, submitSignInPrompt, doSignOut,
+  openAddMenu,
 });
 </script>
 </body>
