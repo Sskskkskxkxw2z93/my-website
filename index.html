@@ -2,614 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcards App</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg-color: #000000;
-            --surface-color: #1c1c1e;
-            --surface-light: #2c2c2e;
-            --text-color: #ffffff;
-            --text-secondary: #aeaeb2;
-            --accent-color: #0a84ff;
-            --correct-color: #30d158;
-            --incorrect-color: #ff453a;
-            --border-color: #38383a;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Responsive container to match iPad aspect ratio beautifully on desktop */
-        .app-container {
-            width: 100%;
-            max-width: 1024px;
-            min-height: 100vh;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            padding: 16px;
-        }
-
-        /* Screens management */
-        .screen {
-            display: none;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-            flex-grow: 1;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        /* Header Layout */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 4px;
-            margin-bottom: 16px;
-        }
-
-        .header-left, .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .back-btn, .action-icon {
-            color: var(--accent-color);
-            background: none;
-            border: none;
-            font-size: 17px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-        }
-
-        .action-icon {
-            font-size: 20px;
-        }
-
-        h1 {
-            font-size: 34px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            padding-left: 4px;
-        }
-
-        h2 {
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        /* Decks Main View List */
-        .deck-list {
-            display: flex;
-            flex-direction: column;
-            background-color: var(--surface-color);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .deck-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            color: var(--text-color);
-            text-decoration: none;
-        }
-
-        .deck-item:last-child {
-            border-bottom: none;
-        }
-
-        .deck-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 17px;
-        }
-
-        .deck-info i {
-            color: var(--text-secondary);
-        }
-
-        .deck-item > i {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* Option buttons below elements */
-        .bottom-add-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 17px;
-            margin: 24px auto;
-            cursor: pointer;
-            display: block;
-            text-align: center;
-        }
-
-        /* Action lists standard inside inner views */
-        .action-group {
-            background-color: var(--surface-color);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .action-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-color);
-            background: none;
-            border-top: none;
-            border-left: none;
-            border-right: none;
-            width: 100%;
-            text-align: left;
-            color: var(--text-color);
-            font-size: 17px;
-            cursor: pointer;
-        }
-
-        .action-row:last-child {
-            border-bottom: none;
-        }
-
-        .action-row span.count {
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Destructive action styling */
-        .danger-text {
-            color: var(--incorrect-color) !important;
-            justify-content: center;
-        }
-
-        /* Study & Cards Display Viewports */
-        .card-viewport {
-            flex-grow: 1;
-            background-color: var(--surface-light);
-            border-radius: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 24px;
-            margin: 20px 0;
-            min-height: 350px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .card-text {
-            font-size: 24px;
-            font-weight: 400;
-            line-height: 1.4;
-            max-width: 90%;
-            word-wrap: break-word;
-        }
-
-        .study-counter {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 15px;
-            font-weight: 500;
-        }
-
-        /* Control Bars for session interaction */
-        .bottom-action-bar {
-            margin-top: auto;
-            padding: 12px 0 24px 0;
-        }
-
-        .blue-action-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .dual-action-bar {
-            display: flex;
-            gap: 16px;
-            width: 100%;
-        }
-
-        .rating-btn {
-            flex: 1;
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            color: white;
-            text-align: center;
-        }
-
-        .rating-btn.incorrect {
-            background-color: var(--incorrect-color);
-        }
-
-        .rating-btn.correct {
-            background-color: var(--correct-color);
-        }
-
-        /* Finished Summary screen */
-        .results-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-            gap: 12px;
-            text-align: center;
-        }
-
-        .results-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .result-stat {
-            font-size: 19px;
-            color: var(--text-color);
-        }
-
-        /* Dialogs / Modals Overlay Layouts */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0,0,0,0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 16px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-sheet {
-            background-color: var(--surface-color);
-            border-radius: 14px;
-            width: 100%;
-            max-width: 540px;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .modal-header h3 {
-            font-size: 17px;
-            font-weight: 600;
-        }
-
-        .modal-body {
-            padding: 16px;
-        }
-
-        /* Form Inputs matching native iOS look */
-        .form-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            display: block;
-            padding-left: 4px;
-        }
-
-        .form-input {
-            width: 100%;
-            background-color: var(--surface-light);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            color: white;
-            font-size: 16px;
-            margin-bottom: 16px;
-            outline: none;
-        }
-
-        .form-input:focus {
-            border-color: var(--accent-color);
-        }
-
-        /* Cards Row/Editor Listing Grid */
-        .editor-card-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-            background-color: var(--border-color);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-top: 12px;
-        }
-
-        .editor-card-item {
-            background-color: var(--surface-color);
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .editor-card-content {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            font-size: 16px;
-        }
-
-        .editor-card-answer {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .card-index-indicator {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* Utilities */
-        .search-container {
-            position: relative;
-            width: 220px;
-        }
-
-        .search-container i {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
-        .search-input {
-            width: 100%;
-            background-color: var(--surface-light);
-            border: none;
-            border-radius: 8px;
-            padding: 8px 12px 8px 32px;
-            color: white;
-            font-size: 14px;
-            outline: none;
-        }
-
-        /* Responsiveness modifications */
-        @media(max-width: 768px) {
-            h1 { font-size: 28px; }
-            .card-viewport { min-height: 280px; }
-            .search-container { width: 140px; }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-
-        <div id="screen-home" class="screen active">
-            <header>
-                <div class="header-left">
-                    <button class="action-icon" id="auth-status-btn" onclick="openAuthModal()"><i class="fa-solid fa-user-circle"></i></button>
-                </div>
-                <div class="header-right">
-                    <button class="action-icon" onclick="openDeckModal(false)"><i class="fa-solid fa-plus"></i></button>
-                </div>
-            </header>
-            <h1>Decks</h1>
-            <div class="deck-list" id="decks-container">
-                </div>
-            <button class="bottom-add-btn" onclick="openDeckModal(false)">Add</button>
-        </div>
-
-        <div id="screen-deck-detail" class="screen">
-            <header>
-                <div class="header-left">
-                    <button class="back-btn" onclick="navigateTo('home')"><i class="fa-solid fa-chevron-left"></i> Decks</button>
-                </div>
-                <div class="header-right"></div>
-            </header>
-            <h1 id="detail-deck-title">Deck Title</h1>
-            
-            <div class="action-group">
-                <button class="action-row" onclick="openDeckModal(true)">
-                    <span>Edit deck</span>
-                    <span class="count"><i class="fa-solid fa-chevron-right"></i></span>
-                </button>
-                <button class="action-row" onclick="openCardEditorView()">
-                    <span>Edit cards</span>
-                    <span class="count"><i class="fa-solid fa-chevron-right"></i></span>
-                </button>
-            </div>
-
-            <div class="action-group">
-                <button class="action-row" onclick="startStudySession('all')">
-                    <span>Study all cards</span>
-                    <span class="count" id="detail-card-count">0 cards <i class="fa-solid fa-chevron-right"></i></span>
-                </button>
-            </div>
-        </div>
-
-        <div id="screen-study" class="screen">
-            <header>
-                <div class="header-left">
-                    <button class="back-btn" id="study-back-btn" onclick="exitStudySession()"><i class="fa-solid fa-chevron-left"></i> Details</button>
-                </div>
-                <div class="header-right">
-                    <div class="study-counter" id="study-progress-counter">0/0</div>
-                </div>
-            </header>
-
-            <div class="card-viewport" onclick="flipStudyCard()">
-                <div class="card-text" id="study-card-text">Card Text Window</div>
-            </div>
-
-            <div class="bottom-action-bar">
-                <button class="blue-action-btn" id="reveal-btn" onclick="flipStudyCard()">Reveal</button>
-                <div class="dual-action-bar" id="rating-controls" style="display: none;">
-                    <button class="rating-btn incorrect" onclick="handleCardRating(false)">Incorrect</button>
-                    <button class="rating-btn correct" onclick="handleCardRating(true)">Correct</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="screen-results" class="screen">
-            <div class="results-container">
-                <div class="results-title">Done</div>
-                <div class="result-stat">Correct: <span id="res-correct">0</span></div>
-                <div class="result-stat">Incorrect: <span id="res-incorrect">0</span></div>
-                <div class="result-stat">Skipped: <span id="res-skipped">0</span></div>
-            </div>
-            <div class="bottom-action-bar">
-                <button class="blue-action-btn" onclick="navigateTo('home')">Done</button>
-            </div>
-        </div>
-
-        <div id="screen-cards-list" class="screen">
-            <header>
-                <div class="header-left">
-                    <button class="back-btn" onclick="navigateTo('deck-detail')"><i class="fa-solid fa-chevron-left"></i> <span id="cards-list-back-title">Deck</span></button>
-                </div>
-                <div class="header-right">
-                    <div class="search-container">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" class="search-input" id="card-search" placeholder="Search cards..." oninput="renderEditorCards()">
-                    </div>
-                    <button class="action-icon" onclick="openCardModal(false)"><i class="fa-solid fa-plus"></i></button>
-                </div>
-            </header>
-            <h1>Edit cards</h1>
-            <div class="editor-card-list" id="editor-cards-container">
-                </div>
-        </div>
-
-    </div>
-
-    <div class="modal-overlay" id="modal-auth">
-        <div class="modal-sheet">
-            <div class="modal-header">
-                <h3 id="auth-modal-title">Account Sign In</h3>
-                <button class="back-btn" onclick="closeAuthModal()">Cancel</button>
-            </div>
-            <div class="modal-body">
-                <div id="auth-logged-out-form">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" id="auth-email" class="form-input" placeholder="name@example.com">
-                    
-                    <label class="form-label">Password</label>
-                    <input type="password" id="auth-password" class="form-input" placeholder="••••••••">
-                    
-                    <button class="blue-action-btn" style="margin-bottom: 12px;" onclick="handleEmailAuth('signin')">Sign In</button>
-                    <button class="bottom-add-btn" style="margin: 0 auto;" onclick="handleEmailAuth('signup')">Create Cloud Account</button>
-                </div>
-                <div id="auth-logged-in-profile" style="display: none;">
-                    <p style="margin-bottom: 20px; text-align: center; color: var(--text-secondary);" id="user-display-email"></p>
-                    <button class="blue-action-btn" onclick="handleSignOut()">Sign Out & Clear Local Device View</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modal-deck">
-        <div class="modal-sheet">
-            <div class="modal-header">
-                <h3 id="deck-modal-title">Add deck</h3>
-                <button class="back-btn" onclick="closeDeckModal()">Cancel</button>
-            </div>
-            <div class="modal-body">
-                <label class="form-label">Name</label>
-                <input type="text" id="deck-name-input" class="form-input" placeholder="Enter deck name">
-                
-                <div id="deck-edit-actions" style="display: none;" class="action-group">
-                    <button class="action-row danger-text" onclick="handleDeleteDeck()">Remove this deck</button>
-                </div>
-
-                <button class="blue-action-btn" id="deck-save-btn" onclick="handleSaveDeck()">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modal-card">
-        <div class="modal-sheet">
-            <div class="modal-header">
-                <h3 id="card-modal-title">Add card</h3>
-                <button class="back-btn" onclick="closeCardModal()">Cancel</button>
-            </div>
-            <div class="modal-body">
-                <label class="form-label">Front Text</label>
-                <textarea id="card-front-input" class="form-input" rows="3" placeholder="Enter front text" style="resize: none; font-family: inherit;"></textarea>
-                
-                <label class="form-label">Back Text</label>
-                <textarea id="card-back-input" class="form-input" rows="3" placeholder="Enter back text" style="resize: none; font-family: inherit;"></textarea>
-                
-                <div id="card-edit-actions" style="display: none;" class="action-group">
-                    <button class="action-row danger-text" onclick="handleDeleteCard()">Delete Card</button>
-                </div>
-
-                <button class="blue-action-btn" id="card-save-btn" onclick="handleSaveCard()">Save</button>
-            </div>
-        </div>
-    </div>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Tune Flashcards</title>
+    <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-        // Provided Configuration
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, getDocs, updateDoc, deleteDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // Firebase config (provided by user)
         const firebaseConfig = {
             apiKey: "AIzaSyDk2Np8D7FkcTLLtR3sY0JRvRXrsi58ZDY",
             authDomain: "tune-6a7b5.firebaseapp.com",
@@ -620,414 +22,613 @@
             measurementId: "G-9H0VMN285L"
         };
 
-        // Initialization
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Core Reactive Application State Engine
-        let state = {
-            user: null,
-            decks: [],
-            activeDeckId: null,
-            activeCardId: null,
-            isEditing: false,
-            studySession: {
-                cards: [],
-                currentIndex: 0,
-                correctCount: 0,
-                incorrectCount: 0,
-                skippedCount: 0,
-                isRevealed: false
+        // Make globals available for inline handlers (using window)
+        window.auth = auth;
+        window.db = db;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.getFirestoreHelpers = { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc, arrayUnion, arrayRemove };
+        
+        // ---- Default decks data (initial cards for new user) ----
+        // Biology 2 deck (62 cards: 8 specific from screenshot + 54 placeholder biology cards)
+        const generateBiologyCards = () => {
+            const specificCards = [
+                { id: "bio1", front: "Is light intensity an abiotic or biotic factor?", back: "Abiotic factor" },
+                { id: "bio2", front: "Is pH of a soil an abiotic or a biotic factor?", back: "Abiotic factor" },
+                { id: "bio3", front: "Are predators abiotic or biotic factors?", back: "Biotic factor" },
+                { id: "bio4", front: "Is food an abiotic or biotic factor?", back: "Biotic factor" },
+                { id: "bio5", front: "All the living organisms and the place where they live is called ...", back: "An ecosystem" },
+                { id: "bio6", front: "One person is Aa and another person is AA for a gene. Describe their phenotypes and genotypes.", back: "They have the same phenotype but different genotypes for this characteristic" },
+                { id: "bio7", front: "State two ways biomass is lost in a food chain?", back: "Egestion, Respiration (Not growth)" },
+                { id: "bio8", front: "What is ecotourism?", back: "Responsible travel to natural areas that conserves environment and improves well-being of local people" }
+            ];
+            const extraCards = [];
+            for (let i = 9; i <= 62; i++) {
+                extraCards.push({
+                    id: `bio${i}`,
+                    front: `Biology concept ${i}: What is the function of the mitochondria?`,
+                    back: `Mitochondria produce energy (ATP) through cellular respiration.`
+                });
             }
+            // Override first 8 with real ones, extra 54 filler but realistic
+            const all = [...specificCards, ...extraCards.slice(0, 54)];
+            return all;
         };
 
-        // Local Fallback Mock Data matching context screenshots if clean database instance
-        const defaultLocalData = [
-            {
-                id: "deck-bio2",
-                name: "Biology 2",
+        const defaultDecks = [
+            { 
+                name: "Biology 2", 
+                color: "#4CAF50", 
+                cards: generateBiologyCards()
+            },
+            { 
+                name: "Chemistry 2", 
+                color: "#FF9800", 
                 cards: [
-                    { id: "c1", front: "Is light intensity an abiotic or biotic factor ?", back: "Abiotic factor" },
-                    { id: "c2", front: "Is pH of a soil and abiotic or a biotic factor?", back: "Abiotic factor" },
-                    { id: "c3", front: "Are predators abiotic or biotic factors?", back: "Biotic factor" },
-                    { id: "c4", front: "Is food a abiotic or biotic factor?", back: "Biotic factor" },
-                    { id: "c5", front: "All the living organisms and the place where they live is called ...", back: "An ecosystem" },
-                    { id: "c6", front: "One person is Aa and another person is AA for a gene. Describe their phenotypes and genotypes.", back: "They have the same phenotype but different genotypes for this characteristic" },
-                    { id: "c7", front: "State two ways biomass is lost in a food chain?", back: "Egestion   Respiration   (Not growth)" },
-                    { id: "c8", front: "What is ecotourism?", back: "Tourism directed towards exotic, often threatened, natural environments, intended to support conservation efforts and observe wildlife." }
+                    { id: "chem1", front: "What is the pH of a neutral solution?", back: "7" },
+                    { id: "chem2", front: "What is the atomic number of Carbon?", back: "6" },
+                    { id: "chem3", front: "What is the formula for water?", back: "H₂O" },
                 ]
             },
-            { id: "deck-chem2", name: "Chemistry 2", cards: [] },
-            { id: "deck-geo2", name: "Geography 2", cards: [] },
-            { id: "deck-maths", name: "Maths", cards: [] },
-            { id: "deck-phys1", name: "Physics 1", cards: [] },
-            { id: "deck-phys2", name: "Physics 2", cards: [] }
+            { 
+                name: "Geography 2", 
+                color: "#2196F3", 
+                cards: [
+                    { id: "geo1", front: "What is the longest river in the world?", back: "Nile" },
+                    { id: "geo2", front: "What is the capital of France?", back: "Paris" },
+                ]
+            },
+            { 
+                name: "Maths", 
+                color: "#9C27B0", 
+                cards: [
+                    { id: "math1", front: "What is the value of π to two decimals?", back: "3.14" },
+                    { id: "math2", front: "Solve: 12 × 12", back: "144" },
+                ]
+            },
+            { 
+                name: "Physics 1", 
+                color: "#F44336", 
+                cards: [
+                    { id: "phy1", front: "What is Newton's first law?", back: "An object remains at rest or uniform motion unless acted by a force" }
+                ]
+            },
+            { 
+                name: "Physics 2", 
+                color: "#607D8B", 
+                cards: [
+                    { id: "phy2_1", front: "What is the speed of light?", back: "3×10⁸ m/s" }
+                ]
+            }
         ];
 
-        // Global Bindings for procedural inline UI handlers
-        window.navigateTo = navigateTo;
-        window.openAuthModal = openAuthModal;
-        window.closeAuthModal = closeAuthModal;
-        window.handleEmailAuth = handleEmailAuth;
-        window.handleSignOut = handleSignOut;
-        window.openDeckModal = openDeckModal;
-        window.closeDeckModal = closeDeckModal;
-        window.handleSaveDeck = handleSaveDeck;
-        window.handleDeleteDeck = handleDeleteDeck;
-        window.openCardEditorView = openCardEditorView;
-        window.openCardModal = openCardModal;
-        window.closeCardModal = closeCardModal;
-        window.handleSaveCard = handleSaveCard;
-        window.handleDeleteCard = handleDeleteCard;
-        window.startStudySession = startStudySession;
-        window.flipStudyCard = flipStudyCard;
-        window.handleCardRating = handleCardRating;
-        window.exitStudySession = exitStudySession;
-        window.renderEditorCards = renderEditorCards;
-
-        // Auth Observability Sync Loop
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                state.user = user;
-                document.getElementById('auth-status-btn').style.color = "var(--correct-color)";
-                document.getElementById('auth-logged-out-form').style.display = 'none';
-                document.getElementById('auth-logged-in-profile').style.display = 'block';
-                document.getElementById('user-display-email').innerText = `Logged in as:\n${user.email}`;
-                await pullUserDataCloud();
+        // Helper: initialize user decks in Firestore
+        async function initUserDecks(userId) {
+            const userDecksRef = doc(db, "users", userId);
+            const userSnap = await getDoc(userDecksRef);
+            if (!userSnap.exists()) {
+                await setDoc(userDecksRef, { decks: defaultDecks });
             } else {
-                state.user = null;
-                document.getElementById('auth-status-btn').style.color = "var(--accent-color)";
-                document.getElementById('auth-logged-out-form').style.display = 'block';
-                document.getElementById('auth-logged-in-profile').style.display = 'none';
-                loadLocalStorageFallback();
-            }
-            renderDecks();
-        });
-
-        // Cloud IO Operations
-        async function pushUserDataCloud() {
-            if (!state.user) return;
-            try {
-                await setDoc(doc(db, "users", state.user.uid), { decks: state.decks });
-            } catch (err) {
-                console.error("Cloud synchronization error:", err);
-            }
-        }
-
-        async function pullUserDataCloud() {
-            if (!state.user) return;
-            try {
-                const docSnap = await getDoc(doc(db, "users", state.user.uid));
-                if (docSnap.exists() && docSnap.data().decks) {
-                    state.decks = docSnap.data().decks;
-                } else {
-                    loadLocalStorageFallback();
-                    await pushUserDataCloud();
-                }
-            } catch (err) {
-                console.error("Cloud retrieval failure:", err);
-            }
-        }
-
-        function loadLocalStorageFallback() {
-            const local = localStorage.getItem('flashcards_decks');
-            if (local) {
-                state.decks = JSON.parse(local);
-            } else {
-                state.decks = defaultLocalData;
-                saveData();
-            }
-        }
-
-        function saveData() {
-            if (state.user) {
-                pushUserDataCloud();
-            } else {
-                localStorage.setItem('flashcards_decks', JSON.stringify(state.decks));
-            }
-        }
-
-        // Navigation Framework
-        function navigateTo(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(`screen-${screenId}`).classList.add('active');
-            
-            if(screenId === 'home') {
-                renderDecks();
-            } else if (screenId === 'deck-detail') {
-                const deck = state.decks.find(d => d.id === state.activeDeckId);
-                if(deck) {
-                    document.getElementById('detail-deck-title').innerText = deck.name;
-                    document.getElementById('detail-card-count').innerHTML = `${deck.cards.length} cards <i class="fa-solid fa-chevron-right"></i>`;
+                const data = userSnap.data();
+                if (!data.decks || data.decks.length === 0) {
+                    await updateDoc(userDecksRef, { decks: defaultDecks });
                 }
             }
+            return true;
         }
 
-        // Authentication Methods
-        function openAuthModal() { document.getElementById('modal-auth').classList.add('active'); }
-        function closeAuthModal() { document.getElementById('modal-auth').classList.remove('active'); }
+        async function fetchUserDecks(userId) {
+            const userDoc = await getDoc(doc(db, "users", userId));
+            if (userDoc.exists()) {
+                return userDoc.data().decks || [];
+            }
+            return [];
+        }
 
-        async function handleEmailAuth(mode) {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value;
-            if(!email || !password) return alert("Please enter both an email and password.");
+        async function saveUserDecks(userId, decks) {
+            await setDoc(doc(db, "users", userId), { decks }, { merge: true });
+        }
 
-            try {
-                if (mode === 'signin') {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                }
-                closeAuthModal();
-            } catch (err) {
-                alert(err.message);
+        // ---- app state ----
+        window.currentUser = null;
+        window.decksList = [];      // array of deck objects
+        window.currentDeck = null;   // deck object when in detail/edit
+        window.studySession = {
+            cards: [],
+            currentIndex: 0,
+            correctCount: 0,
+            incorrectCount: 0,
+            skippedCount: 0,
+            isReverse: false,
+            isShuffle: false,
+            filterMode: null,  // 'incorrect' or null
+            originalCards: []
+        };
+        window.currentView = "decks"; // decks, deckDetail, study, editCards, editDeck
+
+        // DOM elements root
+        const appRoot = document.getElementById("app");
+
+        // Helper: re-render current view
+        function render() {
+            if (!appRoot) return;
+            if (!window.currentUser) {
+                renderAuthScreen();
+                return;
+            }
+            switch (window.currentView) {
+                case "decks": renderDecksView(); break;
+                case "deckDetail": renderDeckDetailView(); break;
+                case "study": renderStudyView(); break;
+                case "editCards": renderEditCardsView(); break;
+                case "editDeck": renderEditDeckView(); break;
+                default: renderDecksView();
             }
         }
 
-        async function handleSignOut() {
-            try {
-                await signOut(auth);
-                closeAuthModal();
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-
-        // Home View Deck Renderer
-        function renderDecks() {
-            const container = document.getElementById('decks-container');
-            container.innerHTML = '';
-            state.decks.forEach(deck => {
-                const row = document.createElement('div');
-                row.className = 'deck-item';
-                row.onclick = () => {
-                    state.activeDeckId = deck.id;
-                    navigateTo('deck-detail');
-                };
-                row.innerHTML = `
-                    <div class="deck-info">
-                        <i class="fa-regular fa-folder"></i>
-                        <span>${deck.name}</span>
+        // ---- Auth UI (replaces settings sign with sign in button) ----
+        function renderAuthScreen() {
+            appRoot.innerHTML = `
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <h1>📖 Flashcards</h1>
+                        <p>Sign in to sync your decks across devices</p>
+                        <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
+                        <input type="password" id="loginPassword" placeholder="Password" class="auth-input">
+                        <button id="signInBtn" class="auth-btn">Sign In</button>
+                        <button id="signUpBtn" class="auth-btn secondary">Create Account</button>
                     </div>
-                    <i class="fa-solid fa-chevron-right"></i>
-                `;
-                container.appendChild(row);
+                </div>
+            `;
+            document.getElementById("signInBtn")?.addEventListener("click", () => {
+                const email = document.getElementById("loginEmail").value;
+                const pwd = document.getElementById("loginPassword").value;
+                signInWithEmailAndPassword(auth, email, pwd).catch(err => alert("Error: " + err.message));
+            });
+            document.getElementById("signUpBtn")?.addEventListener("click", () => {
+                const email = document.getElementById("loginEmail").value;
+                const pwd = document.getElementById("loginPassword").value;
+                createUserWithEmailAndPassword(auth, email, pwd).catch(err => alert("Error: " + err.message));
             });
         }
 
-        // Deck Modifier Logic
-        function openDeckModal(isEditing = false) {
-            state.isEditing = isEditing;
-            const titleEl = document.getElementById('deck-modal-title');
-            const inputEl = document.getElementById('deck-name-input');
-            const deleteGroup = document.getElementById('deck-edit-actions');
-            
-            if (isEditing) {
-                titleEl.innerText = "Edit deck";
-                const deck = state.decks.find(d => d.id === state.activeDeckId);
-                inputEl.value = deck ? deck.name : '';
-                deleteGroup.style.display = 'block';
-            } else {
-                titleEl.innerText = "Add deck";
-                inputEl.value = '';
-                deleteGroup.style.display = 'none';
-            }
-            document.getElementById('modal-deck').classList.add('active');
+        // Decks list (removed all premium-related: no folders, no upgrade banners)
+        function renderDecksView() {
+            const decks = window.decksList;
+            appRoot.innerHTML = `
+                <div class="decks-header">
+                    <h2>Decks</h2>
+                    <div class="header-actions">
+                        <button id="signOutBtn" class="icon-btn">🚪 Logout</button>
+                    </div>
+                </div>
+                <div class="decks-grid">
+                    ${decks.map(deck => `
+                        <div class="deck-card" data-deck-name="${deck.name}">
+                            <div class="deck-color" style="background-color: ${deck.color || '#ccc'}"></div>
+                            <div class="deck-info">
+                                <h3>${escapeHtml(deck.name)}</h3>
+                                <span class="card-count">${deck.cards?.length || 0} cards</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                    <div class="add-deck-btn" id="addDeckBtn">+ Add</div>
+                </div>
+            `;
+            document.querySelectorAll('.deck-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const name = card.getAttribute('data-deck-name');
+                    const deck = window.decksList.find(d => d.name === name);
+                    if (deck) {
+                        window.currentDeck = deck;
+                        window.currentView = "deckDetail";
+                        render();
+                    }
+                });
+            });
+            document.getElementById("addDeckBtn")?.addEventListener("click", () => {
+                const newName = prompt("Enter deck name:");
+                if (newName && newName.trim()) {
+                    const newDeck = {
+                        name: newName.trim(),
+                        color: "#AAAAAA",
+                        cards: []
+                    };
+                    window.decksList.push(newDeck);
+                    saveUserDecks(window.currentUser.uid, window.decksList).then(() => {
+                        fetchDecksAndRender();
+                    });
+                }
+            });
+            document.getElementById("signOutBtn")?.addEventListener("click", () => {
+                signOut(auth);
+            });
         }
 
-        function closeDeckModal() { document.getElementById('modal-deck').classList.remove('active'); }
-
-        function handleSaveDeck() {
-            const name = document.getElementById('deck-name-input').value.trim();
-            if(!name) return;
-
-            if (state.isEditing) {
-                state.decks = state.decks.map(d => d.id === state.activeDeckId ? { ...d, name } : d);
-            } else {
-                const newDeck = { id: 'deck-' + Date.now(), name, cards: [] };
-                state.decks.push(newDeck);
-                state.activeDeckId = newDeck.id;
-            }
-            saveData();
-            closeDeckModal();
-            navigateTo(state.isEditing ? 'deck-detail' : 'home');
-        }
-
-        function handleDeleteDeck() {
-            if(confirm("Are you sure you want to delete this deck?")) {
-                state.decks = state.decks.filter(d => d.id !== state.activeDeckId);
-                saveData();
-                closeDeckModal();
-                navigateTo('home');
-            }
-        }
-
-        // Card Sub-Editor Interface List Logic
-        function openCardEditorView() {
-            const deck = state.decks.find(d => d.id === state.activeDeckId);
-            document.getElementById('cards-list-back-title').innerText = deck ? deck.name : 'Back';
-            document.getElementById('card-search').value = '';
-            navigateTo('cards-list');
-            renderEditorCards();
-        }
-
-        function renderEditorCards() {
-            const container = document.getElementById('editor-cards-container');
-            container.innerHTML = '';
-            const deck = state.decks.find(d => d.id === state.activeDeckId);
+        // Deck detail (removed premium: no export deck, merge, reset results, manual order visual, no upgrade banners)
+        function renderDeckDetailView() {
+            const deck = window.currentDeck;
             if (!deck) return;
-
-            const query = document.getElementById('card-search').value.toLowerCase();
-            const filteredCards = deck.cards.filter(c => 
-                c.front.toLowerCase().includes(query) || c.back.toLowerCase().includes(query)
-            );
-
-            filteredCards.forEach((card, idx) => {
-                const row = document.createElement('div');
-                row.className = 'editor-card-item';
-                row.onclick = () => openCardModal(true, card.id);
-                row.innerHTML = `
-                    <div class="editor-card-content">
-                        <div>${card.front}</div>
-                        <div class="editor-card-answer">~<br>${card.back}</div>
+            const cardCount = deck.cards?.length || 0;
+            appRoot.innerHTML = `
+                <div class="detail-header">
+                    <button class="back-btn" id="backDecksBtn">← Decks</button>
+                    <h2>${escapeHtml(deck.name)}</h2>
+                    <button id="editDeckBtn" class="icon-btn">⚙️</button>
+                </div>
+                <div class="deck-actions">
+                    <button id="studyAllBtn" class="action-primary">📚 Study all cards</button>
+                    <div class="action-row">
+                        <button id="studyFilterIncorrectBtn" class="action-secondary">🎯 Last answered incorrectly</button>
+                        <button id="editCardsBtn" class="action-secondary">✏️ Edit cards</button>
                     </div>
-                    <div class="card-index-indicator">${idx + 1}</div>
-                `;
-                container.appendChild(row);
+                    <div class="toggle-row">
+                        <label><input type="checkbox" id="shuffleToggle"> Shuffle cards</label>
+                        <label><input type="checkbox" id="reverseToggle"> Reverse cards</label>
+                    </div>
+                    <div class="info-text">${cardCount} cards total</div>
+                </div>
+            `;
+            document.getElementById("backDecksBtn")?.addEventListener("click", () => {
+                window.currentView = "decks";
+                render();
             });
+            document.getElementById("editDeckBtn")?.addEventListener("click", () => {
+                window.currentView = "editDeck";
+                render();
+            });
+            document.getElementById("studyAllBtn")?.addEventListener("click", () => {
+                startStudySession(deck, null);
+            });
+            document.getElementById("studyFilterIncorrectBtn")?.addEventListener("click", () => {
+                startStudySession(deck, "incorrect");
+            });
+            document.getElementById("editCardsBtn")?.addEventListener("click", () => {
+                window.currentView = "editCards";
+                render();
+            });
+            const shuffleBox = document.getElementById("shuffleToggle");
+            const reverseBox = document.getElementById("reverseToggle");
+            if (shuffleBox) shuffleBox.checked = false;
+            if (reverseBox) reverseBox.checked = false;
         }
 
-        // Card Creator/Editor Form Sheet Details
-        function openCardModal(isEditing = false, cardId = null) {
-            state.isEditing = isEditing;
-            state.activeCardId = cardId;
-            
-            const titleEl = document.getElementById('card-modal-title');
-            const frontIn = document.getElementById('card-front-input');
-            const backIn = document.getElementById('card-back-input');
-            const deleteGroup = document.getElementById('card-edit-actions');
-
-            if (isEditing) {
-                titleEl.innerText = "Edit card";
-                const deck = state.decks.find(d => d.id === state.activeDeckId);
-                const card = deck.cards.find(c => c.id === cardId);
-                frontIn.value = card ? card.front : '';
-                backIn.value = card ? card.back : '';
-                deleteGroup.style.display = 'block';
-            } else {
-                titleEl.innerText = "Add card";
-                frontIn.value = '';
-                backIn.value = '';
-                deleteGroup.style.display = 'none';
+        function startStudySession(deck, filterType) {
+            let cardsToStudy = [...deck.cards];
+            if (filterType === "incorrect") {
+                cardsToStudy = cardsToStudy.filter(card => card.lastResult === "incorrect");
+                if (cardsToStudy.length === 0) {
+                    alert("No cards answered incorrectly yet. Study some cards first!");
+                    return;
+                }
             }
-            document.getElementById('modal-card').classList.add('active');
-        }
-
-        function closeCardModal() { document.getElementById('modal-card').classList.remove('active'); }
-
-        function handleSaveCard() {
-            const front = document.getElementById('card-front-input').value.trim();
-            const back = document.getElementById('card-back-input').value.trim();
-            if(!front || !back) return;
-
-            const deckIdx = state.decks.findIndex(d => d.id === state.activeDeckId);
-            if(deckIdx === -1) return;
-
-            if (state.isEditing) {
-                state.decks[deckIdx].cards = state.decks[deckIdx].cards.map(c => 
-                    c.id === state.activeCardId ? { ...c, front, back } : c
-                );
-            } else {
-                state.decks[deckIdx].cards.push({ id: 'card-' + Date.now(), front, back });
+            const shuffle = document.getElementById("shuffleToggle")?.checked || false;
+            const reverse = document.getElementById("reverseToggle")?.checked || false;
+            if (shuffle) {
+                for (let i = cardsToStudy.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [cardsToStudy[i], cardsToStudy[j]] = [cardsToStudy[j], cardsToStudy[i]];
+                }
             }
-
-            saveData();
-            closeCardModal();
-            renderEditorCards();
-        }
-
-        function handleDeleteCard() {
-            const deckIdx = state.decks.findIndex(d => d.id === state.activeDeckId);
-            if(deckIdx !== -1) {
-                state.decks[deckIdx].cards = state.decks[deckIdx].cards.filter(c => c.id !== state.activeCardId);
-                saveData();
-                closeCardModal();
-                renderEditorCards();
-            }
-        }
-
-        // Active Workflow Study Session Controller
-        function startStudySession(type) {
-            const deck = state.decks.find(d => d.id === state.activeDeckId);
-            if(!deck || deck.cards.length === 0) return alert("This deck has no cards to study yet.");
-
-            state.studySession = {
-                cards: [...deck.cards], // Linear progression sequence requested natively
+            window.studySession = {
+                cards: cardsToStudy,
                 currentIndex: 0,
                 correctCount: 0,
                 incorrectCount: 0,
-                skippedCount: 0,
-                isRevealed: false
+                skippedCount: cardsToStudy.length,
+                isReverse: reverse,
+                isShuffle: shuffle,
+                filterMode: filterType,
+                originalCards: [...deck.cards],
+                deckId: deck.name
             };
-
-            navigateTo('study');
-            updateStudyCardUI();
+            window.currentView = "study";
+            render();
         }
 
-        function updateStudyCardUI() {
-            const session = state.studySession;
-            if(session.currentIndex >= session.cards.length) {
-                // Completed workflow path redirection
-                document.getElementById('res-correct').innerText = session.correctCount;
-                document.getElementById('res-incorrect').innerText = session.incorrectCount;
-                document.getElementById('res-skipped').innerText = session.skippedCount;
-                navigateTo('results');
+        function renderStudyView() {
+            const session = window.studySession;
+            if (!session.cards.length) {
+                appRoot.innerHTML = `<div class="empty-state">No cards in this session.<button id="backToDeck">Back</button></div>`;
+                document.getElementById("backToDeck")?.addEventListener("click", () => {
+                    window.currentView = "deckDetail";
+                    render();
+                });
                 return;
             }
-
-            const currentCard = session.cards[session.currentIndex];
-            document.getElementById('study-progress-counter').innerText = `${session.currentIndex + 1}/${session.cards.length}`;
+            const card = session.cards[session.currentIndex];
+            const revealed = window.revealed || false;
+            const frontText = session.isReverse ? (card.back || "") : (card.front || "");
+            const backText = session.isReverse ? (card.front || "") : (card.back || "");
             
-            if(session.isRevealed) {
-                document.getElementById('study-card-text').innerText = currentCard.back;
-                document.getElementById('reveal-btn').style.display = 'none';
-                document.getElementById('rating-controls').style.display = 'flex';
+            appRoot.innerHTML = `
+                <div class="study-header">
+                    <button class="back-btn" id="exitStudyBtn">← Exit</button>
+                    <div class="progress">${session.currentIndex+1}/${session.cards.length}</div>
+                </div>
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard">
+                        <div class="card-content">${revealed ? escapeHtml(backText) : escapeHtml(frontText)}</div>
+                    </div>
+                    ${!revealed ? '<button id="revealBtn" class="reveal-btn">Reveal</button>' : `
+                        <div class="action-buttons">
+                            <button id="incorrectBtn" class="result-btn incorrect">Incorrect</button>
+                            <button id="correctBtn" class="result-btn correct">Correct</button>
+                        </div>
+                    `}
+                </div>
+                <div class="session-stats">
+                    Correct: ${session.correctCount} &nbsp;| Incorrect: ${session.incorrectCount} &nbsp;| Remaining: ${session.cards.length - session.currentIndex - (revealed?0:0) + (revealed?0:0)}
+                </div>
+            `;
+            document.getElementById("exitStudyBtn")?.addEventListener("click", () => {
+                window.currentView = "deckDetail";
+                render();
+            });
+            if (!revealed) {
+                document.getElementById("revealBtn")?.addEventListener("click", () => {
+                    window.revealed = true;
+                    renderStudyView();
+                });
             } else {
-                document.getElementById('study-card-text').innerText = currentCard.front;
-                document.getElementById('reveal-btn').style.display = 'block';
-                document.getElementById('rating-controls').style.display = 'none';
+                document.getElementById("correctBtn")?.addEventListener("click", () => {
+                    // update card's lastResult in global deck data for filter later
+                    updateCardLastResult(card, "correct");
+                    session.correctCount++;
+                    session.skippedCount--;
+                    goToNextCard();
+                });
+                document.getElementById("incorrectBtn")?.addEventListener("click", () => {
+                    updateCardLastResult(card, "incorrect");
+                    session.incorrectCount++;
+                    session.skippedCount--;
+                    goToNextCard();
+                });
             }
         }
 
-        function flipStudyCard() {
-            if(!state.studySession.isRevealed) {
-                state.studySession.isRevealed = true;
-                updateStudyCardUI();
+        async function updateCardLastResult(card, result) {
+            const deckName = window.studySession.deckId;
+            const deckIndex = window.decksList.findIndex(d => d.name === deckName);
+            if (deckIndex !== -1) {
+                const deck = window.decksList[deckIndex];
+                const cardIdx = deck.cards.findIndex(c => c.id === card.id);
+                if (cardIdx !== -1) {
+                    deck.cards[cardIdx].lastResult = result;
+                    window.decksList[deckIndex] = deck;
+                    await saveUserDecks(window.currentUser.uid, window.decksList);
+                }
             }
         }
 
-        function handleCardRating(isCorrect) {
-            if(isCorrect) {
-                state.studySession.correctCount++;
+        function goToNextCard() {
+            const session = window.studySession;
+            session.currentIndex++;
+            window.revealed = false;
+            if (session.currentIndex >= session.cards.length) {
+                alert(`Session finished! Correct: ${session.correctCount}, Incorrect: ${session.incorrectCount}`);
+                window.currentView = "deckDetail";
+                render();
             } else {
-                state.studySession.incorrectCount++;
+                renderStudyView();
             }
-            state.studySession.currentIndex++;
-            state.studySession.isRevealed = false;
-            updateStudyCardUI();
         }
 
-        function exitStudySession() {
-            const session = state.studySession;
-            const remaining = session.cards.length - session.currentIndex;
-            state.studySession.skippedCount += remaining;
-            
-            document.getElementById('res-correct').innerText = session.correctCount;
-            document.getElementById('res-incorrect').innerText = session.incorrectCount;
-            document.getElementById('res-skipped').innerText = state.studySession.skippedCount;
-            navigateTo('results');
+        function renderEditCardsView() {
+            const deck = window.currentDeck;
+            if (!deck) return;
+            appRoot.innerHTML = `
+                <div class="edit-header">
+                    <button class="back-btn" id="backDetailBtn">← Back</button>
+                    <h2>Edit cards: ${escapeHtml(deck.name)}</h2>
+                    <button id="addCardBtn" class="icon-btn">+ Card</button>
+                </div>
+                <div class="cards-list">
+                    ${deck.cards.map((card, idx) => `
+                        <div class="card-editor-item" data-card-idx="${idx}">
+                            <div class="card-fields">
+                                <input class="front-input" value="${escapeHtml(card.front)}" placeholder="Front">
+                                <textarea class="back-input" placeholder="Back">${escapeHtml(card.back)}</textarea>
+                            </div>
+                            <button class="delete-card-btn" data-idx="${idx}">🗑️</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button id="saveCardsBtn" class="save-btn">Save changes</button>
+            `;
+            document.getElementById("backDetailBtn")?.addEventListener("click", () => {
+                window.currentView = "deckDetail";
+                render();
+            });
+            document.getElementById("addCardBtn")?.addEventListener("click", () => {
+                deck.cards.push({
+                    id: "card_" + Date.now() + "_" + Math.random(),
+                    front: "New front text",
+                    back: "New back text"
+                });
+                renderEditCardsView();
+            });
+            document.querySelectorAll(".delete-card-btn").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const idx = parseInt(btn.getAttribute("data-idx"));
+                    deck.cards.splice(idx, 1);
+                    renderEditCardsView();
+                });
+            });
+            document.getElementById("saveCardsBtn")?.addEventListener("click", async () => {
+                const items = document.querySelectorAll(".card-editor-item");
+                for (let i = 0; i < items.length; i++) {
+                    const frontInput = items[i].querySelector(".front-input");
+                    const backInput = items[i].querySelector(".back-input");
+                    if (deck.cards[i]) {
+                        deck.cards[i].front = frontInput.value;
+                        deck.cards[i].back = backInput.value;
+                    }
+                }
+                await saveUserDecks(window.currentUser.uid, window.decksList);
+                const updatedDeck = window.decksList.find(d => d.name === deck.name);
+                if (updatedDeck) window.currentDeck = updatedDeck;
+                alert("Cards saved!");
+                window.currentView = "deckDetail";
+                render();
+            });
         }
+
+        function renderEditDeckView() {
+            const deck = window.currentDeck;
+            appRoot.innerHTML = `
+                <div class="edit-header">
+                    <button class="back-btn" id="backFromEditDeck">← Back</button>
+                    <h2>Edit deck</h2>
+                </div>
+                <div class="edit-deck-form">
+                    <label>Deck name</label>
+                    <input type="text" id="deckNameInput" value="${escapeHtml(deck.name)}">
+                    <label>Color</label>
+                    <input type="color" id="deckColorInput" value="${deck.color || '#cccccc'}">
+                    <button id="deleteDeckBtn" class="delete-deck-btn">Remove this deck</button>
+                    <button id="saveDeckChangesBtn" class="save-btn">Save changes</button>
+                </div>
+            `;
+            document.getElementById("backFromEditDeck")?.addEventListener("click", () => {
+                window.currentView = "deckDetail";
+                render();
+            });
+            document.getElementById("saveDeckChangesBtn")?.addEventListener("click", async () => {
+                const newName = document.getElementById("deckNameInput").value.trim();
+                if (newName && newName !== deck.name && window.decksList.some(d => d.name === newName)) {
+                    alert("Deck with that name already exists!");
+                    return;
+                }
+                deck.name = newName || deck.name;
+                deck.color = document.getElementById("deckColorInput").value;
+                await saveUserDecks(window.currentUser.uid, window.decksList);
+                window.currentDeck = deck;
+                alert("Deck updated");
+                window.currentView = "deckDetail";
+                render();
+            });
+            document.getElementById("deleteDeckBtn")?.addEventListener("click", async () => {
+                if (confirm(`Delete "${deck.name}" permanently?`)) {
+                    const idx = window.decksList.findIndex(d => d.name === deck.name);
+                    if (idx !== -1) window.decksList.splice(idx, 1);
+                    await saveUserDecks(window.currentUser.uid, window.decksList);
+                    window.currentView = "decks";
+                    render();
+                }
+            });
+        }
+
+        async function fetchDecksAndRender() {
+            if (!window.currentUser) return;
+            const decks = await fetchUserDecks(window.currentUser.uid);
+            window.decksList = decks;
+            if (window.currentDeck) {
+                const freshDeck = decks.find(d => d.name === window.currentDeck?.name);
+                if (freshDeck) window.currentDeck = freshDeck;
+                else window.currentDeck = null;
+            }
+            render();
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                window.currentUser = user;
+                await initUserDecks(user.uid);
+                await fetchDecksAndRender();
+            } else {
+                window.currentUser = null;
+                window.decksList = [];
+                window.currentDeck = null;
+                render();
+            }
+        });
+
+        function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+        window.revealed = false;
+        window.render = render;
     </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+        body {
+            background: #f2f2f7;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #app {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+            overflow: hidden;
+            min-height: 85vh;
+            padding: 20px 18px 28px;
+        }
+        /* Auth */
+        .auth-container { display: flex; justify-content: center; align-items: center; min-height: 70vh; }
+        .auth-card { background: white; border-radius: 28px; padding: 24px; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
+        .auth-input { width: 100%; padding: 14px; margin: 12px 0; border: 1px solid #e5e5ea; border-radius: 14px; font-size: 16px; }
+        .auth-btn { background: #007aff; color: white; border: none; padding: 12px; border-radius: 14px; width: 100%; margin-top: 8px; font-weight: 600; font-size: 16px; }
+        .auth-btn.secondary { background: #e9e9ef; color: #007aff; margin-top: 8px; }
+        /* Decks */
+        .decks-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .decks-grid { display: flex; flex-direction: column; gap: 12px; }
+        .deck-card { background: #f9f9fc; border-radius: 20px; padding: 12px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: 0.1s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #efeff4; }
+        .deck-color { width: 44px; height: 44px; border-radius: 16px; }
+        .deck-info h3 { font-size: 18px; font-weight: 600; }
+        .card-count { font-size: 13px; color: #8e8e93; }
+        .add-deck-btn { background: white; border: 1.5px dashed #c6c6c8; border-radius: 20px; text-align: center; padding: 16px; font-weight: 500; color: #007aff; margin-top: 8px; cursor: pointer; }
+        .icon-btn { background: none; border: none; font-size: 24px; cursor: pointer; padding: 8px; }
+        /* Detail */
+        .detail-header, .edit-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .back-btn { background: none; border: none; font-size: 18px; font-weight: 500; color: #007aff; cursor: pointer; padding: 6px 0; }
+        .deck-actions { display: flex; flex-direction: column; gap: 16px; }
+        .action-primary { background: #007aff; color: white; border: none; padding: 14px; border-radius: 24px; font-weight: 600; font-size: 17px; cursor: pointer; }
+        .action-secondary { background: #f2f2f7; border: none; padding: 12px; border-radius: 24px; font-weight: 500; flex: 1; text-align: center; cursor: pointer; }
+        .action-row { display: flex; gap: 12px; }
+        .toggle-row { display: flex; gap: 24px; justify-content: center; margin: 8px 0; }
+        .info-text { color: #6c6c70; text-align: center; font-size: 14px; }
+        /* Study */
+        .study-header { display: flex; justify-content: space-between; margin-bottom: 32px; }
+        .flashcard-container { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+        .flashcard { background: white; width: 100%; min-height: 280px; border-radius: 36px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; text-align: center; padding: 28px; font-size: 22px; font-weight: 500; border: 1px solid #e9e9ef; }
+        .card-content { word-break: break-word; }
+        .reveal-btn { background: #007aff; color: white; border: none; padding: 14px 32px; border-radius: 40px; font-size: 18px; font-weight: 600; cursor: pointer; }
+        .action-buttons { display: flex; gap: 20px; width: 100%; justify-content: center; }
+        .result-btn { flex: 1; padding: 14px; border-radius: 40px; font-size: 18px; font-weight: 600; border: none; cursor: pointer; }
+        .correct { background: #34c759; color: white; }
+        .incorrect { background: #ff3b30; color: white; }
+        .session-stats { margin-top: 32px; text-align: center; font-size: 15px; color: #6c6c70; }
+        /* Edit cards */
+        .cards-list { display: flex; flex-direction: column; gap: 16px; margin: 20px 0; max-height: 55vh; overflow-y: auto; }
+        .card-editor-item { background: #f9f9fc; border-radius: 20px; padding: 12px; display: flex; gap: 12px; align-items: flex-start; border: 1px solid #e9e9ef; }
+        .card-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .front-input, .back-input { width: 100%; padding: 12px; border: 1px solid #e5e5ea; border-radius: 16px; font-size: 15px; }
+        .delete-card-btn { background: #ff3b3010; border: none; font-size: 22px; cursor: pointer; padding: 6px; border-radius: 30px; }
+        .save-btn { background: #007aff; color: white; border: none; padding: 14px; border-radius: 30px; font-weight: 600; margin-top: 12px; width: 100%; cursor: pointer; }
+        .edit-deck-form { display: flex; flex-direction: column; gap: 20px; margin-top: 24px; }
+        .delete-deck-btn { background: #ff3b30; color: white; border: none; padding: 14px; border-radius: 30px; font-weight: 600; cursor: pointer; }
+        @media (max-width: 500px) { body { padding: 12px; } .flashcard { font-size: 18px; min-height: 220px; } }
+    </style>
+</head>
+<body>
+<div id="app">Loading...</div>
 </body>
 </html>
