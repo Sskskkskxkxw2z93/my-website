@@ -1,0 +1,14 @@
+{
+  "name": "Decks",
+  "short_name": "Decks",
+  "icons": [
+    {
+      "src": "images/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000"
+}
